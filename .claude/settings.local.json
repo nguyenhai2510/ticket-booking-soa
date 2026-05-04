@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw spring-javaformat:apply)",
+      "Bash(./mvnw clean *)"
+    ]
+  }
+}
