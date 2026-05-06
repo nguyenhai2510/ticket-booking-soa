@@ -13,3 +13,5 @@ globs:
 
 ## State & UI
 - (Bạn có thể thêm luật về thư viện UI bạn thích ở đây, ví dụ: "Sử dụng TailwindCSS cho styling" hoặc "Quản lý state bằng Redux Toolkit").
+- CSS & Styling: Tailwind CSS.
+UI Components: Shadcn UI.

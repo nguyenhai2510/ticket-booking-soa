@@ -28,4 +28,12 @@ public class GatewayConfig {
                 .filter(LoadBalancerFilterFunctions.lb("booking-service"))
                 .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> userServiceRoutes() {
+        return GatewayRouterFunctions.route("user-service-route")
+                .route(path("/api/users/**"), HandlerFunctions.http())
+                .filter(LoadBalancerFilterFunctions.lb("user-service"))
+                .build();
+    }
 }
