@@ -1,61 +1,149 @@
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { eventService, type Event } from '@/api/eventService';
 
 export default function Home() {
   const navigate = useNavigate();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
+  useEffect(() => {
+    let mounted = true;
+
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await eventService.getEvents();
+        if (!mounted) return;
+        setEvents(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!mounted) return;
+        setError(e instanceof Error ? e.message : 'Không thể tải danh sách sự kiện');
+      } finally {
+        if (!mounted) return;
+        setLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const content = useMemo(() => {
+    if (loading) {
+      return (
+        <div className="py-12 text-center text-muted-foreground">
+          Đang tải sự kiện...
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="py-12 text-center space-y-4">
+          <p className="text-destructive">{error}</p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại
+          </Button>
+        </div>
+      );
+    }
+
+    if (!events.length) {
+      return (
+        <div className="py-12 text-center text-muted-foreground">
+          Chưa có sự kiện nào.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((ev) => {
+          const categories = ev.ticketCategories ?? [];
+          const minPrice =
+            categories.length > 0
+              ? Math.min(...categories.map((c) => c.price))
+              : null;
+          const maxPrice =
+            categories.length > 0
+              ? Math.max(...categories.map((c) => c.price))
+              : null;
+
+          const priceText =
+            minPrice === null
+              ? 'Chưa có hạng vé'
+              : minPrice === maxPrice
+                ? `${minPrice.toLocaleString('vi-VN')}đ`
+                : `${minPrice.toLocaleString('vi-VN')}đ - ${maxPrice.toLocaleString('vi-VN')}đ`;
+
+          return (
+            <Card key={ev.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-xl">{ev.name}</CardTitle>
+                <CardDescription className="line-clamp-2">
+                  {ev.description ?? 'Không có mô tả'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Địa điểm:</span>{' '}
+                  {ev.location ?? 'Chưa cập nhật'}
+                </div>
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Giá vé:</span>{' '}
+                  {priceText}
+                </div>
+              </CardContent>
+              <CardFooter className="gap-3">
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  disabled
+                >
+                  Xem chi tiết (sắp có)
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }, [events, loading, error]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-100 p-4">
-      <Card className="w-full max-w-2xl shadow-xl">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-4xl font-bold text-center">
-            🎫 Ticket Booking System
-          </CardTitle>
-          <CardDescription className="text-center text-lg">
-            Chào mừng đến với hệ thống đặt vé trực tuyến
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Ticket Booking System
+            </h1>
             <p className="text-muted-foreground">
-              Sprint 1 hoàn thành! Hệ thống đã sẵn sàng với các tính năng:
+              Danh sách sự kiện
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-semibold mb-2">✅ Backend</h3>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Eureka Server (Service Discovery)</li>
-                  <li>• API Gateway (Port 8080)</li>
-                  <li>• User Service (Authentication)</li>
-                  <li>• Event Service</li>
-                  <li>• Booking Service</li>
-                </ul>
-              </div>
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold mb-2">✅ Frontend</h3>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Vite + React + TypeScript</li>
-                  <li>• Tailwind CSS + Shadcn UI</li>
-                  <li>• React Hook Form + Zod</li>
-                  <li>• React Router DOM</li>
-                  <li>• Axios Client</li>
-                </ul>
-              </div>
-            </div>
           </div>
-          <div className="flex gap-4 justify-center">
-            <Button onClick={handleLogout} variant="outline">
-              Đăng xuất
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <Button onClick={handleLogout} variant="outline">
+            Đăng xuất
+          </Button>
+        </div>
+
+        {content}
+      </div>
     </div>
   );
 }

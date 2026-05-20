@@ -2,6 +2,11 @@
 # Đóng băng hành động đẩy code trực tiếp lên nhánh main.
 set -euo pipefail
 
+# Single source of truth: reuse Cursor hook
+if [[ -x ".cursor/hooks/gate-git-push.sh" ]]; then
+  exec bash ".cursor/hooks/gate-git-push.sh"
+fi
+
 payload="$(cat)"
 # Cần cài đặt công cụ jq trên máy để parse JSON, nếu chưa có, lệnh này sẽ bỏ qua
 cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null || echo '')"
