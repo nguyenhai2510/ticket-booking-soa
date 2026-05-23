@@ -26,6 +26,10 @@ public class EventServiceImpl implements EventService {
         if (event.getTicketCategories() != null && !event.getTicketCategories().isEmpty()) {
             for (TicketCategory ticketCategory : event.getTicketCategories()) {
                 ticketCategory.setEvent(event);
+                if (ticketCategory.getAvailableQuantity() == null
+                        && ticketCategory.getTotalQuantity() != null) {
+                    ticketCategory.setAvailableQuantity(ticketCategory.getTotalQuantity());
+                }
             }
         }
         return eventRepository.save(event);

@@ -1,8 +1,4 @@
--- -- Reset database script for event-service
--- -- Run this SQL in pgAdmin or DBeaver connected to db_event database
-
--- -- Drop all tables with CASCADE to remove foreign key constraints
--- DROP TABLE IF EXISTS ticket_categories CASCADE;
--- DROP TABLE IF EXISTS events CASCADE;
-
--- -- Tables will be recreated automatically by Hibernate when the service starts
+-- Reset db_event schema after entity changes (run in pgAdmin / psql connected to db_event)
+DROP TABLE IF EXISTS ticket_categories CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+-- Tables are recreated on next event-service start (spring.jpa.hibernate.ddl-auto=update)

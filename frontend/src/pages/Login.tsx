@@ -32,9 +32,14 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const response = await axiosClient.post("/api/users/login", data);
+      const response = await axiosClient.post("/api/users/login", data) as {
+        id?: string;
+        token?: string;
+      };
 
-      // Lưu token nếu có
+      if (response.id) {
+        localStorage.setItem("userId", response.id);
+      }
       if (response.token) {
         localStorage.setItem("token", response.token);
       }

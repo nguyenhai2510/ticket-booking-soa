@@ -1,19 +1,22 @@
 import axiosClient from './axiosClient';
 
 export interface TicketCategory {
-  id: number;
+  id: string;
   name: string;
   price: number;
-  quantity: number;
+  totalQuantity: number;
+  availableQuantity: number;
 }
 
 export interface Event {
-  id: number;
-  name: string;
+  id: string;
+  title: string;
   description?: string | null;
-  location?: string | null;
-  startTime?: string | null;
-  endTime?: string | null;
+  location: string;
+  eventDate: string;
+  imageUrl?: string | null;
+  version?: number;
+  createdAt?: string | null;
   ticketCategories?: TicketCategory[];
 }
 
@@ -22,8 +25,7 @@ export const eventService = {
     return await axiosClient.get('/api/events');
   },
 
-  getEventById: async (id: number): Promise<Event> => {
+  getEventById: async (id: string): Promise<Event> => {
     return await axiosClient.get(`/api/events/${id}`);
   },
 };
-

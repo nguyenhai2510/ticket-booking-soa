@@ -1,0 +1,53 @@
+// Ticket Booking SOA — canonical schema (database-per-service)
+// Import at https://dbdiagram.io
+
+Project ticket_booking_soa {
+  database_type: 'PostgreSQL'
+  Note: 'Logical FKs across DBs are UUID references only (no cross-database constraints).'
+}
+
+Table db_user.users {
+  id uuid [pk]
+  username varchar(255) [not null, unique]
+  password varchar(255) [not null]
+  email varchar(255) [not null, unique]
+  role varchar(255) [not null]
+  created_at timestamp
+}
+
+Table db_event.events {
+  id uuid [pk]
+  title varchar(255) [not null]
+  description text
+  location varchar(255) [not null]
+  event_date timestamp [not null]
+  image_url varchar(255)
+  version int [not null, default: 0, note: 'Optimistic lock (@Version)']
+  created_at timestamp
+}
+
+Table db_event.ticket_categories {
+  id uuid [pk]
+  event_id uuid [not null, ref: > db_event.events.id]
+  name varchar(255) [not null]
+  price decimal(12,2) [not null]
+  total_quantity int [not null]
+  available_quantity int [not null]
+}
+
+Table db_booking.bookings {
+  id uuid [pk]
+  user_id uuid [not null, note: 'Logical ref to db_user.users.id']
+  event_id uuid [not null, note: 'Logical ref to db_event.events.id']
+  total_amount decimal(12,2) [not null]
+  status varchar(50) [not null]
+  booking_time timestamp [not null]
+}
+
+Table db_booking.booking_items {
+  id uuid [pk]
+  booking_id uuid [not null, ref: > db_booking.bookings.id]
+  ticket_category_id uuid [not null, note: 'Logical ref to db_event.ticket_categories.id']
+  quantity int [not null]
+  price decimal(12,2) [not null, note: 'Unit price at booking time']
+}

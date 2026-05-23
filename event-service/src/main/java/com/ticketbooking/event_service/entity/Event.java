@@ -1,9 +1,9 @@
-// src/main/java/com/ticketbooking/event_service/entity/Event.java
 package com.ticketbooking.event_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +34,17 @@ public class Event {
 
     @Column(nullable = false)
     private LocalDateTime eventDate;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Version
+    @Column(nullable = false)
+    private Integer version = 0;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

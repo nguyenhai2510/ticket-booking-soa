@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/gate-git-push.sh"
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/gate-git-push.ps1"
           }
         ]
       }

@@ -4,6 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { eventService, type Event } from '@/api/eventService';
 
+function formatEventDate(iso: string | undefined): string {
+  if (!iso) return 'Chưa cập nhật';
+  try {
+    return new Date(iso).toLocaleString('vi-VN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
@@ -12,6 +24,7 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     navigate('/login');
   };
 
@@ -53,10 +66,7 @@ export default function Home() {
       return (
         <div className="py-12 text-center space-y-4">
           <p className="text-destructive">{error}</p>
-          <Button
-            variant="outline"
-            onClick={() => window.location.reload()}
-          >
+          <Button variant="outline" onClick={() => window.location.reload()}>
             Thử lại
           </Button>
         </div>
@@ -77,11 +87,11 @@ export default function Home() {
           const categories = ev.ticketCategories ?? [];
           const minPrice =
             categories.length > 0
-              ? Math.min(...categories.map((c) => c.price))
+              ? Math.min(...categories.map((c) => Number(c.price)))
               : null;
           const maxPrice =
             categories.length > 0
-              ? Math.max(...categories.map((c) => c.price))
+              ? Math.max(...categories.map((c) => Number(c.price)))
               : null;
 
           const priceText =
@@ -91,30 +101,51 @@ export default function Home() {
                 ? `${minPrice.toLocaleString('vi-VN')}đ`
                 : `${minPrice.toLocaleString('vi-VN')}đ - ${maxPrice.toLocaleString('vi-VN')}đ`;
 
+          const totalAvailable = categories.reduce(
+            (sum, c) => sum + (c.availableQuantity ?? 0),
+            0,
+          );
+
           return (
-            <Card key={ev.id} className="hover:shadow-md transition-shadow">
+            <Card key={ev.id} className="hover:shadow-md transition-shadow overflow-hidden">
+              {ev.imageUrl ? (
+                <img
+                  src={ev.imageUrl}
+                  alt={ev.title}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                <div className="w-full h-40 bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                  Chưa có ảnh
+                </div>
+              )}
               <CardHeader className="space-y-2">
-                <CardTitle className="text-xl">{ev.name}</CardTitle>
+                <CardTitle className="text-xl">{ev.title}</CardTitle>
                 <CardDescription className="line-clamp-2">
                   {ev.description ?? 'Không có mô tả'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Địa điểm:</span>{' '}
-                  {ev.location ?? 'Chưa cập nhật'}
+                  <span className="font-medium text-foreground">Thời gian:</span>{' '}
+                  {formatEventDate(ev.eventDate)}
                 </div>
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Giá vé:</span>{' '}
-                  {priceText}
+                  <span className="font-medium text-foreground">Địa điểm:</span>{' '}
+                  {ev.location}
                 </div>
+                <div className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Giá vé:</span> {priceText}
+                </div>
+                {categories.length > 0 && (
+                  <div className="text-muted-foreground">
+                    <span className="font-medium text-foreground">Còn lại:</span>{' '}
+                    {totalAvailable.toLocaleString('vi-VN')} vé
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="gap-3">
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  disabled
-                >
+                <Button className="w-full" variant="secondary" disabled>
                   Xem chi tiết (sắp có)
                 </Button>
               </CardFooter>
@@ -133,9 +164,7 @@ export default function Home() {
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
               Ticket Booking System
             </h1>
-            <p className="text-muted-foreground">
-              Danh sách sự kiện
-            </p>
+            <p className="text-muted-foreground">Danh sách sự kiện</p>
           </div>
           <Button onClick={handleLogout} variant="outline">
             Đăng xuất
