@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw spring-javaformat:apply)",
+      "Bash(./mvnw clean *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx shadcn@latest *)",
+      "Bash(./mvnw spring-boot:run)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "Bash(curl -s http://localhost:8080)",
+      "Bash(curl -X POST http://localhost:8080/api/users/login -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"test\\\\\",\\\\\"password\\\\\":\\\\\"123456\\\\\"}\" -v)",
+      "Bash(curl *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(PGPASSWORD=123456 psql *)",
+      "Bash(where psql *)"
+    ]
+  }
+}

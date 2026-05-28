@@ -3,18 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { eventService, type Event } from '@/api/eventService';
-
-function formatEventDate(iso: string | undefined): string {
-  if (!iso) return 'Chưa cập nhật';
-  try {
-    return new Date(iso).toLocaleString('vi-VN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  } catch {
-    return iso;
-  }
-}
+import { formatEventDate } from '@/lib/format';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -145,8 +134,11 @@ export default function Home() {
                 )}
               </CardContent>
               <CardFooter className="gap-3">
-                <Button className="w-full" variant="secondary" disabled>
-                  Xem chi tiết (sắp có)
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/events/${ev.id}`)}
+                >
+                  Xem chi tiết
                 </Button>
               </CardFooter>
             </Card>

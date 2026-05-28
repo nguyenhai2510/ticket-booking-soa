@@ -17,6 +17,18 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 10000
+
+booking:
+  reservation:
+    timeout-minutes: 5
+    expiry-check-interval-ms: 30000
 
 eureka:
   client:

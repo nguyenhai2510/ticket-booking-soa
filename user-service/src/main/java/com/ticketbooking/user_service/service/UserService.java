@@ -4,7 +4,10 @@ import com.ticketbooking.user_service.dto.LoginRequest;
 import com.ticketbooking.user_service.dto.RegisterRequest;
 import com.ticketbooking.user_service.dto.UserResponse;
 import com.ticketbooking.user_service.entity.User;
+import com.ticketbooking.user_service.exception.UserNotFoundException;
 import com.ticketbooking.user_service.repository.UserRepository;
+
+import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,11 @@ public class UserService {
 
 		User savedUser = userRepository.save(user);
 		return new UserResponse(savedUser);
+	}
+
+	public UserResponse getUserById(UUID id) {
+		User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return new UserResponse(user);
 	}
 
 	public UserResponse login(LoginRequest request) {

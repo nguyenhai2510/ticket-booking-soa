@@ -33,6 +33,7 @@ Table db_event.ticket_categories {
   price decimal(12,2) [not null]
   total_quantity int [not null]
   available_quantity int [not null]
+  version int [not null, default: 0, note: 'Optimistic lock (@Version) on reserve/release']
 }
 
 Table db_booking.bookings {
@@ -42,6 +43,7 @@ Table db_booking.bookings {
   total_amount decimal(12,2) [not null]
   status varchar(50) [not null]
   booking_time timestamp [not null]
+  reserved_until timestamp [note: 'RESERVED until; auto-cancel + release inventory']
 }
 
 Table db_booking.booking_items {

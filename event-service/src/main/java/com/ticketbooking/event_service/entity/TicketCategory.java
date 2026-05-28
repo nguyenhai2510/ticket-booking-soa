@@ -33,6 +33,10 @@ public class TicketCategory {
     @Column(nullable = false)
     private Integer availableQuantity;
 
+    @Version
+    @Column(nullable = false)
+    private Integer version = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     @JsonBackReference

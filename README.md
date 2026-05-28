@@ -42,19 +42,25 @@ Gateway routing: `api-gateway/.../config/GatewayConfig.java` (Java DSL `RouterFu
 | `db_event` | `events`, `ticket_categories` | `events`: +`image_url`, `version`, `created_at` |
 | `db_booking` | `bookings`, `booking_items` | `user_id` UUID, `total_amount`, `booking_time`; items: `ticket_category_id`, `quantity`, `price` |
 
-Sau khi đổi entity, chạy reset dev DB: `event-service/reset-database.sql`, `booking-service/reset-database.sql` rồi khởi động lại service.
+Sau khi đổi entity: migrate an toàn — `event-service/migrate-schema.sql`, `booking-service/migrate-schema.sql` (hoặc `./mvnw` + `SchemaMigrationRunner` trong từng service); hoặc reset dev DB: `*/reset-database.sql` rồi khởi động lại service.
 
-## 🟡 Sprint 3: Booking (TIẾP THEO)
+## 🟢 Sprint 3: Booking — Backend SAGA (HOÀN TẤT Task 1–3)
 
-- Entity/schema đã sẵn; logic nghiệp vụ chưa xong.
-- **Chưa xong:** API `/deduct` trên `event-service`; `booking-service` gọi qua `@LoadBalanced` + `booking_items`; UI đặt vé.
+- **Patterns:** SAGA Orchestration (`BookingSagaOrchestrator`), Optimistic lock (`TicketCategory.@Version`).
+- **event-service:** `POST /api/inventory/reserve`, `POST /api/inventory/release`.
+- **booking-service:** OpenFeign → `user-service`, `event-service`; luồng `PENDING` → `RESERVED` → `CONFIRMED` / `CANCELLED` / `FAILED`.
+- **Tài liệu:** [`docs/sprint3-saga.md`](docs/sprint3-saga.md).
+
+## 🟢 Sprint 3: Frontend (HOÀN TẤT)
+
+- `/events/:id` — chi tiết sự kiện, chọn số lượng vé, `POST /api/bookings`.
+- `/checkout/:bookingId` — mock thanh toán 2 bước (`confirm-payment`, `cancel`).
+- `bookingService.ts`; guard đăng nhập (`userId` trong `localStorage`).
 
 # 3. VIỆC CẦN LÀM TIẾP THEO (BACKLOG)
 
-1. **Trang chi tiết sự kiện** + form chọn hạng vé / số lượng.
-2. **Hoàn thiện booking:** deduct `available_quantity`, tạo `booking` + `booking_items`, tính `total_amount`, Eureka inter-service.
-3. **Auth (tuỳ chọn):** JWT; route guard; `Login` đã lưu `userId` (UUID) vào `localStorage`.
-4. **Dọn frontend:** `App.tsx` template Vite không dùng.
+1. **Auth (tuỳ chọn):** JWT; route guard chặt hơn.
+2. **Dọn frontend:** `App.tsx` template Vite không dùng.
 
 # 4. API GATEWAY — ROUTES HIỆN CÓ
 

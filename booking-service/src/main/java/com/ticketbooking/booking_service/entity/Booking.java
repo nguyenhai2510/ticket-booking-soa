@@ -1,6 +1,5 @@
 package com.ticketbooking.booking_service.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -14,91 +13,103 @@ import java.util.UUID;
 @Table(name = "bookings")
 public class Booking {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+	@Column(name = "user_id", nullable = false)
+	private UUID userId;
 
-    @Column(name = "event_id", nullable = false)
-    private UUID eventId;
+	@Column(name = "event_id", nullable = false)
+	private UUID eventId;
 
-    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+	@Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
+	private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @Column(nullable = false, length = 50)
-    private String status;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 50)
+	private BookingStatus status = BookingStatus.PENDING;
 
-    @CreationTimestamp
-    @Column(name = "booking_time", nullable = false, updatable = false)
-    private LocalDateTime bookingTime;
+	@CreationTimestamp
+	@Column(name = "booking_time", nullable = false, updatable = false)
+	private LocalDateTime bookingTime;
 
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<BookingItem> items = new ArrayList<>();
+	@Column(name = "reserved_until")
+	private LocalDateTime reservedUntil;
 
-    public Booking() {
-    }
+	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<BookingItem> items = new ArrayList<>();
 
-    public UUID getId() {
-        return id;
-    }
+	public Booking() {
+	}
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+	public UUID getId() {
+		return id;
+	}
 
-    public UUID getUserId() {
-        return userId;
-    }
+	public void setId(UUID id) {
+		this.id = id;
+	}
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
+	public UUID getUserId() {
+		return userId;
+	}
 
-    public UUID getEventId() {
-        return eventId;
-    }
+	public void setUserId(UUID userId) {
+		this.userId = userId;
+	}
 
-    public void setEventId(UUID eventId) {
-        this.eventId = eventId;
-    }
+	public UUID getEventId() {
+		return eventId;
+	}
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
+	public void setEventId(UUID eventId) {
+		this.eventId = eventId;
+	}
 
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+	public BigDecimal getTotalAmount() {
+		return totalAmount;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public BookingStatus getStatus() {
+		return status;
+	}
 
-    public LocalDateTime getBookingTime() {
-        return bookingTime;
-    }
+	public void setStatus(BookingStatus status) {
+		this.status = status;
+	}
 
-    public void setBookingTime(LocalDateTime bookingTime) {
-        this.bookingTime = bookingTime;
-    }
+	public LocalDateTime getBookingTime() {
+		return bookingTime;
+	}
 
-    public List<BookingItem> getItems() {
-        return items;
-    }
+	public void setBookingTime(LocalDateTime bookingTime) {
+		this.bookingTime = bookingTime;
+	}
 
-    public void setItems(List<BookingItem> items) {
-        this.items = items;
-    }
+	public LocalDateTime getReservedUntil() {
+		return reservedUntil;
+	}
 
-    public void addItem(BookingItem item) {
-        items.add(item);
-        item.setBooking(this);
-    }
+	public void setReservedUntil(LocalDateTime reservedUntil) {
+		this.reservedUntil = reservedUntil;
+	}
+
+	public List<BookingItem> getItems() {
+		return items;
+	}
+
+	public void setItems(List<BookingItem> items) {
+		this.items = items;
+	}
+
+	public void addItem(BookingItem item) {
+		items.add(item);
+		item.setBooking(this);
+	}
+
 }

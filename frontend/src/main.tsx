@@ -6,11 +6,21 @@ import './index.css'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
+import EventDetail from './pages/EventDetail'
+import Checkout from './pages/Checkout'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
+  },
+  {
+    path: '/events/:id',
+    element: <EventDetail />,
+  },
+  {
+    path: '/checkout/:bookingId',
+    element: <Checkout />,
   },
   {
     path: '/login',

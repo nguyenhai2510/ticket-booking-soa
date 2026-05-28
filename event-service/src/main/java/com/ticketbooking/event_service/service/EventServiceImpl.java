@@ -36,13 +36,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+        return eventRepository.findAllWithCategories();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Event getEventById(UUID id) {
-        return eventRepository.findById(id)
+        return eventRepository.findByIdWithCategories(id)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
     }
 }
