@@ -38,7 +38,7 @@
 
 ```
 PENDING → RESERVED → CONFIRMED
-              ↓ confirm (mock fail) / cancel
+              ↓ confirm (mock fail) / cancel / hết reserved_until
          COMPENSATING → CANCELLED
 PENDING → (reserve fail) → FAILED
 ```
@@ -64,3 +64,4 @@ Frontend chỉ gọi `POST /api/bookings`, `confirm-payment`, `cancel` qua Gatew
 3. Cancel khi `RESERVED` → tồn kho cộng lại.
 4. Confirm với `"simulateFailure": true` → `CANCELLED` + tồn kho cộng lại.
 5. Đặt vượt số vé → `400` hoặc booking `FAILED`.
+6. Không thanh toán trong 5 phút → `CANCELLED` + tồn kho cộng lại (scheduler hoặc `GET` checkout).

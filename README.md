@@ -40,27 +40,40 @@ Gateway routing: `api-gateway/.../config/GatewayConfig.java` (Java DSL `RouterFu
 |----|------|---------|
 | `db_user` | `users` | Khớp ERD |
 | `db_event` | `events`, `ticket_categories` | `events`: +`image_url`, `version`, `created_at` |
-| `db_booking` | `bookings`, `booking_items` | `user_id` UUID, `total_amount`, `booking_time`; items: `ticket_category_id`, `quantity`, `price` |
+| `db_booking` | `bookings`, `booking_items` | `user_id` UUID, `total_amount`, `booking_time`, `reserved_until`; items: `ticket_category_id`, `quantity`, `price` |
 
 Sau khi đổi entity: migrate an toàn — `event-service/migrate-schema.sql`, `booking-service/migrate-schema.sql` (hoặc `./mvnw` + `SchemaMigrationRunner` trong từng service); hoặc reset dev DB: `*/reset-database.sql` rồi khởi động lại service.
 
-## 🟢 Sprint 3: Booking — Backend SAGA (HOÀN TẤT Task 1–3)
+## 🟢 Sprint 3: Booking & SAGA (HOÀN TẤT)
 
-- **Patterns:** SAGA Orchestration (`BookingSagaOrchestrator`), Optimistic lock (`TicketCategory.@Version`).
-- **event-service:** `POST /api/inventory/reserve`, `POST /api/inventory/release`.
-- **booking-service:** OpenFeign → `user-service`, `event-service`; luồng `PENDING` → `RESERVED` → `CONFIRMED` / `CANCELLED` / `FAILED`.
-- **Tài liệu:** [`docs/sprint3-saga.md`](docs/sprint3-saga.md).
+**Backend**
 
-## 🟢 Sprint 3: Frontend (HOÀN TẤT)
+- **Patterns:** SAGA Orchestration (`BookingSagaOrchestrator`), optimistic lock (`TicketCategory.@Version`).
+- **`event-service`:** `POST /api/inventory/reserve`, `POST /api/inventory/release`.
+- **`booking-service`:** OpenFeign → `user-service`, `event-service`; API `POST/GET /api/bookings`, `confirm-payment`, `cancel`.
+- **Luồng trạng thái:** `PENDING` → `RESERVED` → `CONFIRMED` | `CANCELLED` | `FAILED` (compensate qua `COMPENSATING` khi hủy / hoàn tồn kho).
+- **Giữ vé có thời hạn:** `reserved_until = now + 5 phút` (`booking.reservation.timeout-minutes`); scheduler tự hủy + `release` khi hết giờ; kiểm tra hết hạn trên `GET` / confirm / cancel.
+- **Tài liệu chi tiết:** [`docs/sprint3-saga.md`](docs/sprint3-saga.md).
+
+**Frontend**
 
 - `/events/:id` — chi tiết sự kiện, chọn số lượng vé, `POST /api/bookings`.
-- `/checkout/:bookingId` — mock thanh toán 2 bước (`confirm-payment`, `cancel`).
+- `/checkout/:bookingId` — mock thanh toán (`confirm-payment`, `cancel`); đồng hồ đếm ngược **5:00**; tự cập nhật khi hết hạn giữ vé.
 - `bookingService.ts`; guard đăng nhập (`userId` trong `localStorage`).
 
-# 3. VIỆC CẦN LÀM TIẾP THEO (BACKLOG)
+**Kiểm thử nhanh Sprint 3**
 
-1. **Auth (tuỳ chọn):** JWT; route guard chặt hơn.
-2. **Dọn frontend:** `App.tsx` template Vite không dùng.
+1. Đặt vé → `RESERVED`, tồn kho giảm, đồng hồ 5 phút chạy.
+2. Confirm → `CONFIRMED`.
+3. Cancel khi `RESERVED` → `CANCELLED`, tồn kho hoàn lại.
+4. Không thanh toán sau 5 phút → tự `CANCELLED` + hoàn vé.
+
+# 3. VIỆC CẦN LÀM TIẾP THEO (BACKLOG — SPRINT 4+)
+
+1. **Auth:** JWT thay `permitAll`; bảo vệ API booking theo user.
+2. **Thanh toán thật:** tích hợp cổng thanh toán (thay mock `confirm-payment`).
+3. **Dọn frontend:** `App.tsx` template Vite không dùng.
+4. **Quan sát vận hành:** health/metrics, tracing giữa các service.
 
 # 4. API GATEWAY — ROUTES HIỆN CÓ
 
