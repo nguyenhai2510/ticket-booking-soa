@@ -7,8 +7,9 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 
 /**
- * One-off dev helper: applies migrate-schema.sql to db_booking.
- * Run: ./mvnw -q test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=com.ticketbooking.booking_service.SchemaMigrationRunner
+ * One-off dev helper: applies migrate-schema.sql to db_booking. Run: ./mvnw -q
+ * test-compile exec:java -Dexec.classpathScope=test
+ * -Dexec.mainClass=com.ticketbooking.booking_service.SchemaMigrationRunner
  */
 public class SchemaMigrationRunner {
 

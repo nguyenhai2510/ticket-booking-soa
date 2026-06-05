@@ -29,8 +29,7 @@ public class SagaBookingStore {
 
 	private final BookingReservationProperties reservationProperties;
 
-	public SagaBookingStore(BookingRepository bookingRepository,
-			BookingReservationProperties reservationProperties) {
+	public SagaBookingStore(BookingRepository bookingRepository, BookingReservationProperties reservationProperties) {
 		this.bookingRepository = bookingRepository;
 		this.reservationProperties = reservationProperties;
 	}

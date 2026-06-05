@@ -40,8 +40,7 @@ public class FeignConfig {
 				return new InventoryConflictException("Inventory conflict (optimistic lock). Please retry.");
 			}
 			if (status >= 400) {
-				return new FeignClientException(
-						"Remote call failed: " + methodKey + " -> HTTP " + status);
+				return new FeignClientException("Remote call failed: " + methodKey + " -> HTTP " + status);
 			}
 			return defaultDecoder.decode(methodKey, response);
 		}

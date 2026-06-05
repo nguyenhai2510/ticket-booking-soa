@@ -58,13 +58,14 @@ public class BookingSagaOrchestrator {
 	}
 
 	/**
-	 * SAGA phase 1: validate → persist PENDING → reserve inventory → RESERVED (or FAILED).
+	 * SAGA phase 1: validate → persist PENDING → reserve inventory → RESERVED (or
+	 * FAILED).
 	 */
 	public BookingResponse startBooking(CreateBookingRequest request) {
 		userServiceClient.getUser(request.getUserId());
 		EventDetailDto event = eventServiceClient.getEvent(request.getEventId());
-		BookingValidationService.ValidatedBooking validated = bookingValidationService
-			.validateAgainstEvent(request, event);
+		BookingValidationService.ValidatedBooking validated = bookingValidationService.validateAgainstEvent(request,
+				event);
 
 		Booking saved = sagaBookingStore.createPending(request.getUserId(), request.getEventId(),
 				validated.totalAmount(), validated.lines());

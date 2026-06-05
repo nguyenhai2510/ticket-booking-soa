@@ -39,8 +39,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BookingExpiredException.class)
 	public ResponseEntity<Map<String, String>> handleExpired(BookingExpiredException ex) {
-		return ResponseEntity.status(HttpStatus.GONE)
-			.body(error("Thời gian giữ vé đã hết. Đơn đã được hủy tự động."));
+		return ResponseEntity.status(HttpStatus.GONE).body(error("Thời gian giữ vé đã hết. Đơn đã được hủy tự động."));
 	}
 
 	@ExceptionHandler(SagaStepNotReadyException.class)
@@ -55,7 +54,9 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-		String message = ex.getBindingResult().getFieldErrors().stream()
+		String message = ex.getBindingResult()
+			.getFieldErrors()
+			.stream()
 			.findFirst()
 			.map(err -> err.getField() + ": " + err.getDefaultMessage())
 			.orElse("Validation failed");

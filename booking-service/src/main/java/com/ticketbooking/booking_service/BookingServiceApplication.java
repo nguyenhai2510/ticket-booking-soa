@@ -8,8 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = "com.ticketbooking.booking_service.client",
-		defaultConfiguration = FeignConfig.class)
+@EnableFeignClients(basePackages = "com.ticketbooking.booking_service.client", defaultConfiguration = FeignConfig.class)
 public class BookingServiceApplication {
 
 	public static void main(String[] args) {

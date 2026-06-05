@@ -41,10 +41,8 @@ public class BookingValidationService {
 				throw new InvalidBookingRequestException(
 						"Ticket category " + item.getTicketCategoryId() + " does not belong to this event");
 			}
-			if (category.getAvailableQuantity() == null
-					|| category.getAvailableQuantity() < item.getQuantity()) {
-				throw new InvalidBookingRequestException(
-						"Not enough tickets for category: " + category.getName());
+			if (category.getAvailableQuantity() == null || category.getAvailableQuantity() < item.getQuantity()) {
+				throw new InvalidBookingRequestException("Not enough tickets for category: " + category.getName());
 			}
 			if (category.getPrice() == null) {
 				throw new InvalidBookingRequestException("Category price is missing: " + category.getName());
