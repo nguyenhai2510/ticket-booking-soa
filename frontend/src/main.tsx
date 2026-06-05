@@ -8,6 +8,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import EventDetail from './pages/EventDetail'
 import Checkout from './pages/Checkout'
+import Profile from './pages/Profile'
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Register />,
+  },
+  {
+    path: '/profile',
+    element: <Profile />,
   },
 ])
 
