@@ -170,7 +170,7 @@ export default function Login() {
               className="w-full h-12 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface font-label-md text-label-md rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm" 
               type="button"
             >
-              <img alt="Google Logo" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB60IIxqf-ZlliNZd3WGLFkSR3NzhprEizc8lFRNCgwtTjcpxOwwl0EEHAmno28xChRPzFJk-xPU7QYwNinqjNN-eeqpZpiM6HBGqes8sAImK_bIFZPv5b8JhMgx5GMR9OtgMJyDAtCy0YRA2FyF70JWxFVZ-fwtNcvcLjnBurIFs5rg7REkDBKfh7tEMQz5gZMrtoDj-P1xf5QKlu2HYP9eRhw5-UMLr8R3YjKDX8ZarznEc52BxIfADUxYG4SjAZhhWuU-gmeqA" />
+              <img alt="Google Logo" className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB60IIxqf-ZlliNZd3WGLFkSR3NzhprEizc8lFRNCgwtTjcpxOwwl0EEHAmno28xChRPzFJk-xPU7QYwNinqjNN-eeqpZpiM6HBGqes8sAImK_bIFZPv5b8JhMgx5GMR9OtgMJyDAtCy0YRA2FyF70JWxFVZ-fwtNcvcLjnBurIFs5rg7REkDBKfh7tEMQz5gZMrtoDj-P1xf5QKlu2HYP9eRhw5-UMLr8R3YjKDX8ZarznEc52BxIfADUxYG4SjAZhhWuU-gmeqA" />
               Đăng nhập bằng Google
             </button>
 
