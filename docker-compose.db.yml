@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: ticket-booking-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_MULTIPLE_DATABASES=db_user,db_event,db_booking
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: always
+
+volumes:
+  postgres-dev-data:

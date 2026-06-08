@@ -1,18 +1,18 @@
 server:
-  port: 8083
+  port: ${PORT:8083}
 
 spring:
   application:
     name: booking-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/db_booking
-    username: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_booking}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
     # Thay bằng mật khẩu thật của bạn
-    password: 123456
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
@@ -35,6 +35,6 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true

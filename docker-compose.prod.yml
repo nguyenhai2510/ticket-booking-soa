@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - PORT=8761
+      # JVM flags: Limit memory footprint to prevent container OOM
+      - JAVA_TOOL_OPTIONS=-Xmx200m -XX:+UseG1GC
+    deploy:
+      resources:
+        limits:
+          memory: 300m
+    restart: always
+    healthcheck:
+      # Use Eureka dashboard endpoint since spring-boot-starter-actuator is not a dependency
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx350m -XX:+UseG1GC
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - SPRING_DATASOURCE_URL=${USER_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx350m -XX:+UseG1GC
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  event-service:
+    build:
+      context: ./event-service
+      dockerfile: Dockerfile
+    container_name: event-service
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - SPRING_DATASOURCE_URL=${EVENT_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx350m -XX:+UseG1GC
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  booking-service:
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - SPRING_DATASOURCE_URL=${BOOKING_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xmx350m -XX:+UseG1GC
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: always
