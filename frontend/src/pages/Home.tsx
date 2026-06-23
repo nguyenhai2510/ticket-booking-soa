@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { eventService, type Event } from '@/api/eventService';
 import { formatEventDate } from '@/lib/format';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function Home() {
+  useRequireAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
