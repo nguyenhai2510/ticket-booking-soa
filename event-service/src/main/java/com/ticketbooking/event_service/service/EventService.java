@@ -8,9 +8,14 @@ import java.util.UUID;
 
 public interface EventService {
 
-    Event createEvent(Event event);
+	Event createEvent(Event event);
 
-    List<Event> getAllEvents();
+	List<Event> getAllEvents();
 
-    Event getEventById(UUID id);
+	Event getEventById(UUID id);
+
+	Event updateEvent(UUID id, Event event);
+
+	void deleteEvent(UUID id);
+
 }

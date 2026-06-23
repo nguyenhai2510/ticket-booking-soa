@@ -19,34 +19,35 @@ import java.util.UUID;
 @EqualsAndHashCode(exclude = "ticketCategories")
 public class Event {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(nullable = false)
-    private String title;
+	@Column(nullable = false)
+	private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+	@Column(columnDefinition = "TEXT")
+	private String description;
 
-    @Column(nullable = false)
-    private String location;
+	@Column(nullable = false)
+	private String location;
 
-    @Column(nullable = false)
-    private LocalDateTime eventDate;
+	@Column(nullable = false)
+	private LocalDateTime eventDate;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+	@Column(name = "image_url")
+	private String imageUrl;
 
-    @Version
-    @Column(nullable = false)
-    private Integer version = 0;
+	@Version
+	@Column(nullable = false)
+	private Integer version = 0;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+	@CreationTimestamp
+	@Column(name = "created_at", updatable = false)
+	private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<TicketCategory> ticketCategories = new ArrayList<>();
+	@OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
+	private List<TicketCategory> ticketCategories = new ArrayList<>();
+
 }

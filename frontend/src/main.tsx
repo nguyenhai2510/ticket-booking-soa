@@ -9,6 +9,11 @@ import Home from './pages/Home'
 import EventDetail from './pages/EventDetail'
 import Checkout from './pages/Checkout'
 import Profile from './pages/Profile'
+import AdminLayout from './components/layout/AdminLayout'
+import Dashboard from './pages/admin/Dashboard'
+import Events from './pages/admin/Events'
+import Sliders from './pages/admin/Sliders'
+import { Navigate } from 'react-router-dom'
 
 const router = createBrowserRouter([
   {
@@ -34,6 +39,28 @@ const router = createBrowserRouter([
   {
     path: '/profile',
     element: <Profile />,
+  },
+  {
+    path: '/admin',
+    element: <AdminLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="dashboard" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: <Dashboard />,
+      },
+      {
+        path: 'events',
+        element: <Events />,
+      },
+      {
+        path: 'sliders',
+        element: <Sliders />,
+      },
+    ],
   },
 ])
 

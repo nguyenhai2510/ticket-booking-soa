@@ -17,28 +17,29 @@ import java.util.UUID;
 @EqualsAndHashCode(exclude = "event")
 public class TicketCategory {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(nullable = false)
-    private String name;
+	@Column(nullable = false)
+	private String name;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal price;
+	@Column(nullable = false, precision = 12, scale = 2)
+	private BigDecimal price;
 
-    @Column(nullable = false)
-    private Integer totalQuantity;
+	@Column(nullable = false)
+	private Integer totalQuantity;
 
-    @Column(nullable = false)
-    private Integer availableQuantity;
+	@Column(nullable = false)
+	private Integer availableQuantity;
 
-    @Version
-    @Column(nullable = false)
-    private Integer version = 0;
+	@Version
+	@Column(nullable = false)
+	private Integer version = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    @JsonBackReference
-    private Event event;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "event_id", nullable = false)
+	@JsonBackReference
+	private Event event;
+
 }

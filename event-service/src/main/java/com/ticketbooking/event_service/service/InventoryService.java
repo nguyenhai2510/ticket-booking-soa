@@ -28,8 +28,7 @@ public class InventoryService {
 			int available = category.getAvailableQuantity();
 			int quantity = item.getQuantity();
 			if (available < quantity) {
-				throw new InsufficientInventoryException(
-						"Not enough tickets for category: " + category.getName());
+				throw new InsufficientInventoryException("Not enough tickets for category: " + category.getName());
 			}
 			category.setAvailableQuantity(available - quantity);
 			ticketCategoryRepository.save(category);

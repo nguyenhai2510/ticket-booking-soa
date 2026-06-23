@@ -28,4 +28,16 @@ export const eventService = {
   getEventById: async (id: string): Promise<Event> => {
     return await axiosClient.get(`/api/events/${id}`);
   },
+
+  createEvent: async (event: Partial<Event>): Promise<Event> => {
+    return await axiosClient.post('/api/events', event);
+  },
+
+  updateEvent: async (id: string, event: Partial<Event>): Promise<Event> => {
+    return await axiosClient.put(`/api/events/${id}`, event);
+  },
+
+  deleteEvent: async (id: string): Promise<void> => {
+    return await axiosClient.delete(`/api/events/${id}`);
+  },
 };

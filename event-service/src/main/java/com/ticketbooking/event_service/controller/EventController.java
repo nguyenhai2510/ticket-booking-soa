@@ -14,25 +14,38 @@ import java.util.UUID;
 @RequestMapping("/api/events")
 public class EventController {
 
-    private final EventService eventService;
+	private final EventService eventService;
 
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
-    }
+	public EventController(EventService eventService) {
+		this.eventService = eventService;
+	}
 
-    @PostMapping
-    public ResponseEntity<Event> createEvent(@RequestBody Event event) {
-        Event savedEvent = eventService.createEvent(event);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
-    }
+	@PostMapping
+	public ResponseEntity<Event> createEvent(@RequestBody Event event) {
+		Event savedEvent = eventService.createEvent(event);
+		return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
+	}
 
-    @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents() {
-        return ResponseEntity.ok(eventService.getAllEvents());
-    }
+	@GetMapping
+	public ResponseEntity<List<Event>> getAllEvents() {
+		return ResponseEntity.ok(eventService.getAllEvents());
+	}
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable UUID id) {
-        return ResponseEntity.ok(eventService.getEventById(id));
-    }
+	@GetMapping("/{id}")
+	public ResponseEntity<Event> getEventById(@PathVariable UUID id) {
+		return ResponseEntity.ok(eventService.getEventById(id));
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<Event> updateEvent(@PathVariable UUID id, @RequestBody Event event) {
+		Event updatedEvent = eventService.updateEvent(id, event);
+		return ResponseEntity.ok(updatedEvent);
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteEvent(@PathVariable UUID id) {
+		eventService.deleteEvent(id);
+		return ResponseEntity.noContent().build();
+	}
+
 }
