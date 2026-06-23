@@ -13,27 +13,28 @@ import static org.springframework.cloud.gateway.server.mvc.predicate.GatewayRequ
 @Configuration
 public class GatewayConfig {
 
-    @Bean
-    public RouterFunction<ServerResponse> eventServiceRoutes() {
-        return GatewayRouterFunctions.route("event-service-route")
-                .route(path("/api/events/**"), HandlerFunctions.http())
-                .filter(LoadBalancerFilterFunctions.lb("event-service"))
-                .build();
-    }
+	@Bean
+	public RouterFunction<ServerResponse> eventServiceRoutes() {
+		return GatewayRouterFunctions.route("event-service-route")
+			.route(path("/api/events/**"), HandlerFunctions.http())
+			.filter(LoadBalancerFilterFunctions.lb("event-service"))
+			.build();
+	}
 
-    @Bean
-    public RouterFunction<ServerResponse> bookingServiceRoutes() {
-        return GatewayRouterFunctions.route("booking-service-route")
-                .route(path("/api/bookings/**"), HandlerFunctions.http())
-                .filter(LoadBalancerFilterFunctions.lb("booking-service"))
-                .build();
-    }
+	@Bean
+	public RouterFunction<ServerResponse> bookingServiceRoutes() {
+		return GatewayRouterFunctions.route("booking-service-route")
+			.route(path("/api/bookings/**"), HandlerFunctions.http())
+			.filter(LoadBalancerFilterFunctions.lb("booking-service"))
+			.build();
+	}
 
-    @Bean
-    public RouterFunction<ServerResponse> userServiceRoutes() {
-        return GatewayRouterFunctions.route("user-service-route")
-                .route(path("/api/users/**"), HandlerFunctions.http())
-                .filter(LoadBalancerFilterFunctions.lb("user-service"))
-                .build();
-    }
+	@Bean
+	public RouterFunction<ServerResponse> userServiceRoutes() {
+		return GatewayRouterFunctions.route("user-service-route")
+			.route(path("/api/users/**"), HandlerFunctions.http())
+			.filter(LoadBalancerFilterFunctions.lb("user-service"))
+			.build();
+	}
+
 }

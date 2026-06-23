@@ -1,102 +1,144 @@
-[PROJECT ONBOARDING - TÀI LIỆU BÀN GIAO CONTEXT DỰ ÁN]
+# 🎟️ EVENTPASS - TÀI LIỆU KHẢO SÁT & BÀN GIAO DỰ ÁN (PROJECT ONBOARDING)
 
-Xin chào Cursor Agent. Bạn đang tham gia vào dự án **Ticket Booking System** (Hệ thống bán vé sự kiện) với vai trò Senior Fullstack Developer. Đọc kỹ trước khi nhận task mới. Chi tiết build/run xem thêm `CLAUDE.md`.
+Chào mừng bạn đến với **Ticket Booking System (EventPass)** - Hệ thống bán vé sự kiện trực tuyến được thiết kế theo kiến trúc Microservices (SOA). Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc hệ thống, trạng thái hiện tại, và hướng dẫn thiết lập nhanh môi trường phát triển cục bộ.
 
-# 1. KIẾN TRÚC & TECH STACK
+> [!IMPORTANT]
+> Chi tiết build/run và các quy tắc phát triển nghiêm ngặt được quy định tại [CLAUDE.md](file:///d:/Project_ca_nhan/ticket-booking-soa/CLAUDE.md) và [GEMINI.md](file:///d:/Project_ca_nhan/ticket-booking-soa/GEMINI.md). Hãy đọc kỹ trước khi thực hiện bất kỳ thay đổi nào.
 
-- **Kiến trúc:** Microservices, Database-per-service.
-- **Backend:** Java 17, Spring Boot 4.0.6, Spring Cloud 2025.1.1 (Eureka, API Gateway MVC).
-- **Cơ sở dữ liệu:** PostgreSQL — `db_user`, `db_event`, `db_booking` (user `postgres`, cấu hình trong từng `application.yml`).
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS v4, Shadcn UI, react-hook-form, Zod, Axios, React Router.
+---
 
-| Thành phần        | Port | Eureka name      | Ghi chú                          |
-|-------------------|------|------------------|----------------------------------|
-| `eureka-server`   | 8761 | —                | Khởi động trước (~30s)           |
-| `api-gateway`     | 8080 | —                | Cổng duy nhất cho frontend       |
-| `user-service`    | 8081 | `user-service`   | DB `db_user`                     |
-| `event-service`   | 8082 | `event-service`  | DB `db_event`                    |
-| `booking-service` | 8083 | `booking-service`| DB `db_booking`                  |
-| `frontend`        | 5173 | —                | `axios` baseURL → `http://localhost:8080` |
+## 🏗️ 1. Kiến Trúc Hệ Thống & Sơ Đồ Cổng (Ports Map)
 
-Gateway routing: `api-gateway/.../config/GatewayConfig.java` (Java DSL `RouterFunction`, `lb://<service-name>`).
+Hệ thống tuân thủ mô hình **Database-per-service** độc lập hoàn toàn. Toàn bộ các yêu cầu từ phía Client (Frontend) bắt buộc phải đi qua API Gateway duy nhất.
 
-# 2. TRẠNG THÁI HIỆN TẠI
+| Thành phần | Port | Eureka Service Name | Cơ sở dữ liệu | Ghi chú / Vai trò |
+| :--- | :---: | :--- | :--- | :--- |
+| **`eureka-server`** | `8761` | — | Không có | Service Registry (Quản lý & định vị các dịch vụ) |
+| **`api-gateway`** | `8080` | — | Không có | Cổng kết nối duy nhất, quản lý Routing & CORS |
+| **`user-service`** | `8081` | `user-service` | `db_user` | Quản lý người dùng, đăng ký, đăng nhập & phân quyền |
+| **`event-service`** | `8082` | `event-service` | `db_event` | Quản lý sự kiện, hạng vé & quản lý tồn kho |
+| **`booking-service`**| `8083` | `booking-service`| `db_booking` | Quản lý đặt vé, thanh toán & điều phối SAGA |
+| **`frontend`** | `5173` | — | Cục bộ | Giao diện khách hàng & Admin (React + Vite) |
 
-## 🟢 Sprint 1: User & Authentication (HOÀN TẤT)
+### Giao tiếp liên dịch vụ (Inter-service Communication):
+- Tất cả giao tiếp HTTP giữa các service backend bắt buộc phải đi qua `@LoadBalanced RestTemplate` hoặc `WebClient` với định danh Eureka (`lb://SERVICE-NAME`).
+- Không được phép gọi chéo database hoặc hardcode địa chỉ IP/localhost giữa các service backend.
+- Cấu hình định tuyến Gateway được triển khai tập trung qua Java DSL `RouterFunction` tại [GatewayConfig.java](file:///d:/Project_ca_nhan/ticket-booking-soa/api-gateway/src/main/java/com/ticketbooking/api_gateway/config/GatewayConfig.java).
 
-- **`user-service`:** `POST /api/users/register`, `POST /api/users/login`; BCrypt; Spring Security `permitAll` (chưa JWT).
-- **`api-gateway`:** CORS (`CorsConfig.java`); route `/api/users/**` → `lb://user-service`.
-- **`frontend`:** Trang `/login`, `/register` (Shadcn + Zod); gọi API qua Gateway 8080.
+---
 
-## 🟢 Sprint 2: Event Management (HOÀN TẤT)
+## 🟢 2. Trạng Thái Phát Triển (Sprints Completed)
 
-- **`event-service`:** Entity `Event` + `TicketCategory` (1-N); API CRUD cơ bản; `ddl-auto: update`.
-- **`api-gateway`:** Route `/api/events/**` → `lb://event-service`.
-- **`frontend`:** Trang chủ `/` — `GET /api/events`, Card grid (title, eventDate, imageUrl, giá vé).
+### 👥 Sprint 1: Quản Lý Người Dùng & Xác Thực (HOÀN TẤT)
+- **Backend (`user-service`):** Triển khai API đăng ký tài khoản (`POST /api/users/register`) và đăng nhập (`POST /api/users/login`). Sử dụng BCrypt để băm mật khẩu, tích hợp Spring Security cơ bản.
+- **API Gateway (`api-gateway`):** Định tuyến `/api/users/**` về `user-service`. Thiết lập cấu hình CORS cho phép giao diện frontend kết nối an toàn.
+- **Frontend (`frontend`):** Thiết lập trang Đăng nhập (`/login`) và Đăng ký (`/register`) sử dụng thư viện Shadcn UI, Zod validation và react-hook-form.
 
-## 🟢 Schema DB (ĐÃ CHỐT — xem `docs/schema.dbml`)
+### 📅 Sprint 2: Quản Lý Sự Kiện & Hạng Vé (HOÀN TẤT)
+- **Backend (`event-service`):** Triển khai thực thể `Event` & `TicketCategory` với quan hệ 1-N. Hỗ trợ tự động tạo bảng thông qua JPA `ddl-auto: update`. Cung cấp CRUD API cho sự kiện.
+- **API Gateway (`api-gateway`):** Định tuyến `/api/events/**` về `event-service`.
+- **Frontend (`frontend`):** Trang chủ hiển thị danh sách sự kiện dưới dạng lưới thẻ (Grid Cards), hỗ trợ lọc danh mục cơ bản và thanh tìm kiếm động.
 
-| DB | Bảng | Ghi chú |
-|----|------|---------|
-| `db_user` | `users` | Khớp ERD |
-| `db_event` | `events`, `ticket_categories` | `events`: +`image_url`, `version`, `created_at` |
-| `db_booking` | `bookings`, `booking_items` | `user_id` UUID, `total_amount`, `booking_time`, `reserved_until`; items: `ticket_category_id`, `quantity`, `price` |
+### 🔄 Sprint 3: Quy Trình Đặt Vé & Giao Dịch SAGA (HOÀN TẤT)
+- **Backend (`booking-service` & `event-service`):**
+  - Áp dụng mẫu thiết kế **SAGA Orchestration** qua `BookingSagaOrchestrator` để quản lý các bước tạo đơn đặt vé, giữ chỗ vé, và bồi hoàn (compensate) khi xảy ra lỗi.
+  - Sử dụng cơ chế khóa lạc quan (Optimistic Locking) `@Version` trên `TicketCategory` ở `event-service` để tránh hiện tượng bán lố vé (overbooking) khi có nhiều yêu cầu mua vé đồng thời.
+  - Hỗ trợ giữ chỗ vé có thời hạn (mặc định 5 phút), tự động giải phóng tồn kho bằng bộ lập lịch quét đơn hàng hết hạn (Scheduler).
+  - Chi tiết tài liệu luồng SAGA: [sprint3-saga.md](file:///d:/Project_ca_nhan/ticket-booking-soa/docs/sprint3-saga.md).
+- **Frontend (`frontend`):**
+  - Trang chi tiết sự kiện (`/events/:id`) cho phép chọn số lượng vé theo từng hạng và gửi yêu cầu đặt vé.
+  - Trang Checkout (`/checkout/:bookingId`) hiển thị thông tin hóa đơn tạm thời, tích hợp đồng hồ đếm ngược giữ chỗ 5 phút và mô phỏng nút thanh toán/hủy đơn.
 
-Sau khi đổi entity: migrate an toàn — `event-service/migrate-schema.sql`, `booking-service/migrate-schema.sql` (hoặc `./mvnw` + `SchemaMigrationRunner` trong từng service); hoặc reset dev DB: `*/reset-database.sql` rồi khởi động lại service.
+### 📊 Sprint 4: Admin Dashboard & Quản Lý Sliders (HOÀN TẤT)
+- **Giao diện Quản trị (`/admin`):**
+  - Thiết kế layout quản trị chuyên nghiệp [AdminLayout.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/components/layout/AdminLayout.tsx) với sidebar điều hướng tiện lợi.
+  - **Dashboard tổng quan ([Dashboard.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/pages/admin/Dashboard.tsx)):** Hiển thị các chỉ số kinh doanh chính (Tổng sự kiện, Lượng vé đã bán, Doanh thu ước tính, Sự kiện sắp diễn ra). Tích hợp biểu đồ cột động trực quan bằng thư viện `recharts` so sánh lượng vé đã bán trên tổng số vé.
+  - **Quản lý Sự kiện ([Events.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/pages/admin/Events.tsx)):** Giao diện CRUD toàn diện cho phép Admin thêm, sửa, xóa sự kiện, quản lý các hạng vé đi kèm (tên hạng, số lượng, giá bán) và cập nhật đường dẫn ảnh poster.
+  - **Quản lý Sliders ([Sliders.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/pages/admin/Sliders.tsx)):** Quản lý các slide banner hiển thị trên đầu trang chủ. Thông tin slide (ảnh, tiêu đề, thứ tự hiển thị, liên kết) được điều phối thông qua [sliderService.ts](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/api/sliderService.ts) lưu trữ ở `localStorage`.
 
-## 🟢 Sprint 3: Booking & SAGA (HOÀN TẤT)
+### 🐳 Sprint 5: Hạ Tầng Docker & Tối Ưu Hóa Kết Nối (HOÀN TẤT)
+- **Container hóa dịch vụ (Dockerization):**
+  - Viết `Dockerfile` tối ưu hóa hai giai đoạn (multi-stage build) sử dụng Eclipse Temurin Alpine JRE 17 cho toàn bộ dịch vụ backend nhằm giảm dung lượng ảnh Docker và đảm bảo an toàn bảo mật (chạy bằng user non-root `spring:spring`).
+  - Thiết lập file [docker-compose.prod.yml](file:///d:/Project_ca_nhan/ticket-booking-soa/docker-compose.prod.yml) để khởi chạy đồng bộ toàn bộ hạ tầng backend với cấu hình giới hạn tài nguyên RAM tối đa (512MB) và tham số JVM (`JAVA_TOOL_OPTIONS`) giúp tránh lỗi tràn bộ nhớ (OOM).
+- **Kết nối cơ sở dữ liệu đám mây:**
+  - Định hình cấu hình kết nối database trong tệp biến môi trường [.env](file:///d:/Project_ca_nhan/ticket-booking-soa/.env) kết nối tới dịch vụ PostgreSQL đám mây (Neon Tech), giúp đơn giản hóa việc triển khai độc lập mà không bắt buộc cài đặt Postgres cục bộ.
+- **Tối ưu hóa Frontend Client:**
+  - Cấu hình interceptor toàn cục trong [axiosClient.ts](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/api/axiosClient.ts) để tự động đính kèm Token xác thực vào tiêu đề Request, đồng thời bắt lỗi 401 Unauthorized để xóa token và điều hướng về trang đăng nhập.
+  - Triển khai hook kiểm soát quyền truy cập [useRequireAuth.ts](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/hooks/useRequireAuth.ts) để tự động bảo vệ các trang yêu cầu đăng nhập (Home, Profile, Admin) bằng cách chuyển hướng người dùng chưa xác thực về `/login`.
+  - Bổ sung trang hồ sơ cá nhân [Profile.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/pages/Profile.tsx) cho phép xem lại lịch sử đặt vé và trạng thái thanh toán cụ thể.
 
-**Backend**
+---
 
-- **Patterns:** SAGA Orchestration (`BookingSagaOrchestrator`), optimistic lock (`TicketCategory.@Version`).
-- **`event-service`:** `POST /api/inventory/reserve`, `POST /api/inventory/release`.
-- **`booking-service`:** OpenFeign → `user-service`, `event-service`; API `POST/GET /api/bookings`, `confirm-payment`, `cancel`.
-- **Luồng trạng thái:** `PENDING` → `RESERVED` → `CONFIRMED` | `CANCELLED` | `FAILED` (compensate qua `COMPENSATING` khi hủy / hoàn tồn kho).
-- **Giữ vé có thời hạn:** `reserved_until = now + 5 phút` (`booking.reservation.timeout-minutes`); scheduler tự hủy + `release` khi hết giờ; kiểm tra hết hạn trên `GET` / confirm / cancel.
-- **Tài liệu chi tiết:** [`docs/sprint3-saga.md`](docs/sprint3-saga.md).
+## 📂 3. Cấu Trúc Database Schema
 
-**Frontend**
+Sơ đồ quan hệ dữ liệu chuẩn hóa của dự án được mô tả chi tiết tại [docs/schema.dbml](file:///d:/Project_ca_nhan/ticket-booking-soa/docs/schema.dbml).
 
-- `/events/:id` — chi tiết sự kiện, chọn số lượng vé, `POST /api/bookings`.
-- `/checkout/:bookingId` — mock thanh toán (`confirm-payment`, `cancel`); đồng hồ đếm ngược **5:00**; tự cập nhật khi hết hạn giữ vé.
-- `bookingService.ts`; guard đăng nhập (`userId` trong `localStorage`).
+| Database | Tên Bảng | Vai trò & Cấu trúc chính |
+| :--- | :--- | :--- |
+| **`db_user`** | `users` | Thông tin người dùng (`id` UUID, `username`, `email`, `password_hash`, `role`) |
+| **`db_event`** | `events`<br>`ticket_categories` | `events`: lưu thông tin sự kiện (`id` UUID, `title`, `description`, `location`, `event_date`, `image_url`, `version`) <br>`ticket_categories`: lưu hạng vé và số lượng (`id`, `event_id`, `name`, `price`, `total_quantity`, `available_quantity`, `version`) |
+| **`db_booking`** | `bookings`<br>`booking_items` | `bookings`: lưu thông tin đơn đặt vé (`id` UUID, `user_id`, `total_amount`, `status`, `reserved_until`, `booking_time`) <br>`booking_items`: lưu chi tiết từng loại vé trong đơn (`id`, `booking_id`, `ticket_category_id`, `quantity`, `price`) |
 
-**Kiểm thử nhanh Sprint 3**
+---
 
-1. Đặt vé → `RESERVED`, tồn kho giảm, đồng hồ 5 phút chạy.
-2. Confirm → `CONFIRMED`.
-3. Cancel khi `RESERVED` → `CANCELLED`, tồn kho hoàn lại.
-4. Không thanh toán sau 5 phút → tự `CANCELLED` + hoàn vé.
+## 🛠️ 4. Hướng Dẫn Khởi Chạy Nhanh (Quick Start)
 
-# 3. VIỆC CẦN LÀM TIẾP THEO (BACKLOG — SPRINT 4+)
+### Yêu Cầu Cần Thiết (Prerequisites):
+- Java JDK 17 & Node.js (phiên bản 18+)
+- Docker Desktop (được khuyến nghị để quản lý database nhanh)
 
-1. **Auth:** JWT thay `permitAll`; bảo vệ API booking theo user.
-2. **Thanh toán thật:** tích hợp cổng thanh toán (thay mock `confirm-payment`).
-3. **Dọn frontend:** `App.tsx` template Vite không dùng.
-4. **Quan sát vận hành:** health/metrics, tracing giữa các service.
+### 👉 Cách 1: Khởi chạy toàn bộ hạ tầng Backend qua Docker Compose (Khuyên dùng)
+Nếu bạn chỉ muốn thử nghiệm ứng dụng mà không cần sửa mã nguồn Spring Boot:
+1. Đảm bảo Docker Desktop đã được mở.
+2. Thiết lập biến mật khẩu và đường dẫn trong tệp [.env](file:///d:/Project_ca_nhan/ticket-booking-soa/.env).
+3. Chạy lệnh tại thư mục gốc dự án:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up --build -d
+   ```
+4. Đợi docker hoàn thành build và khởi chạy các service: `eureka-server` (8761), `api-gateway` (8080) cùng các dịch vụ.
+5. Truy cập Dashboard Eureka tại: [http://localhost:8761](http://localhost:8761) để kiểm tra trạng thái đăng ký của các service.
 
-# 4. API GATEWAY — ROUTES HIỆN CÓ
+### 👉 Cách 2: Chạy Thủ Công Dưới Dạng Nhà Phát Triển (Development Mode)
 
-| Path prefix        | Target service    |
-|--------------------|-------------------|
-| `/api/users/**`    | `user-service`    |
-| `/api/events/**`   | `event-service`   |
-| `/api/bookings/**` | `booking-service` |
+#### Bước 1: Thiết lập cơ sở dữ liệu PostgreSQL cục bộ
+Dự án đã có tệp cấu hình docker-compose cho database dev [docker-compose.db.yml](file:///d:/Project_ca_nhan/ticket-booking-soa/docker-compose.db.yml):
+```bash
+docker-compose -f docker-compose.db.yml up -d
+```
+Docker sẽ khởi chạy container PostgreSQL ở cổng `5432` và kích hoạt đoạn mã [init-scripts/init.sh](file:///d:/Project_ca_nhan/ticket-booking-soa/init-scripts/init.sh) để tạo sẵn 3 database trống: `db_user`, `db_event`, và `db_booking`.
 
-# 5. RÀNG BUỘC CỐT LÕI
+#### Bước 2: Chạy các dịch vụ Spring Boot (Backend)
+Hãy khởi chạy các dịch vụ theo **đúng thứ tự** sau, mở từng tab terminal riêng cho mỗi dịch vụ:
+1. **Khởi chạy Eureka Server:**
+   ```bash
+   cd eureka-server && ./mvnw spring-boot:run
+   ```
+   *(Chờ khoảng 30 giây để Eureka khởi động hoàn toàn trước khi tiếp tục).*
+2. **Khởi chạy các Microservices:**
+   ```bash
+   cd ../user-service && ./mvnw spring-boot:run
+   cd ../event-service && ./mvnw spring-boot:run
+   cd ../booking-service && ./mvnw spring-boot:run
+   ```
+3. **Khởi chạy API Gateway:**
+   ```bash
+   cd ../api-gateway && ./mvnw spring-boot:run
+   ```
 
-1. **Không** gộp database — giữ Database-per-service.
-2. Frontend **chỉ** gọi API Gateway (`8080`), không hardcode port microservice.
-3. Inter-service HTTP: `@LoadBalanced RestTemplate` hoặc `WebClient`, target `http://SERVICE-NAME` / `lb://SERVICE-NAME` — **không** hardcode `localhost:808x` giữa các service.
-4. Mọi microservice đăng ký Eureka (`eureka.client.service-url.defaultZone=http://localhost:8761/eureka/`).
-5. Gateway routing bằng Java DSL trong `GatewayConfig.java` — **không** dùng `spring.cloud.gateway.routes` trong YAML.
-6. UI: Tailwind + Shadcn; không đổi stack đã chốt trừ khi có yêu cầu rõ.
+#### Bước 3: Khởi chạy ứng dụng React (Frontend)
+Mở một tab terminal mới và thực thi:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Trình duyệt sẽ tự động mở trang web phát triển (thường là [http://localhost:5173](http://localhost:5173)). Đăng nhập với tài khoản mẫu hoặc đăng ký tài khoản mới để bắt đầu trải nghiệm!
 
-# 6. KHỞI ĐỘNG NHANH
+---
 
-1. PostgreSQL: tạo `db_user`, `db_event`, `db_booking` (hoặc `init-scripts/init.sh`).
-2. `cd eureka-server && ./mvnw spring-boot:run` — đợi ~30s.
-3. Chạy `api-gateway`, `user-service`, `event-service`, `booking-service` (thứ tự tùy ý).
-4. `cd frontend && npm install && npm run dev` → http://localhost:5173
+## 🔮 5. Kế Hoạch Tiếp Theo (Backlog — Sprint 6+)
 
-Tài liệu frontend chi tiết: `frontend/QUICK_START.md`, `frontend/SPRINT1_COMPLETED.md`.
+1. **Security:** Tích hợp xác thực JSON Web Token (JWT) tập trung thay thế cho việc cấu hình mở `permitAll()`, phân quyền truy cập chi tiết cho các đầu API đặt vé và API quản lý của Admin.
+2. **Thanh toán thực tế:** Kết nối cổng thanh toán thật (như VNPay, MoMo, hoặc Stripe) thay vì quy trình giả lập thanh toán thành công hiện tại.
+3. **Giám sát hệ thống (Observability):** Cấu hình Spring Boot Actuator, Micrometer và tích hợp Prometheus/Grafana để theo dõi hiệu năng hệ thống, cùng OpenTelemetry/Zipkin cho việc truy vết các request (tracing) liên dịch vụ.
+4. **Dọn dẹp mã nguồn:** Loại bỏ tệp mẫu mặc định [App.tsx](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/App.tsx) và [App.css](file:///d:/Project_ca_nhan/ticket-booking-soa/frontend/src/App.css) không sử dụng trong dự án.
