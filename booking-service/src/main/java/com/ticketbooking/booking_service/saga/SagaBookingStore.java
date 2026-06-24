@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,7 +69,8 @@ public class SagaBookingStore {
 		Booking booking = bookingRepository.findById(bookingId)
 			.orElseThrow(() -> new BookingNotFoundException(bookingId));
 		booking.setStatus(BookingStatus.RESERVED);
-		booking.setReservedUntil(LocalDateTime.now().plusMinutes(reservationProperties.getTimeoutMinutes()));
+		booking.setReservedUntil(
+				Instant.now().plus(java.time.Duration.ofMinutes(reservationProperties.getTimeoutMinutes())));
 		return BookingMapper.toResponse(bookingRepository.save(booking));
 	}
 

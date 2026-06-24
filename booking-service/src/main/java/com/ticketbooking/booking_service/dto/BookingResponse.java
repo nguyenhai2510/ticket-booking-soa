@@ -3,7 +3,7 @@ package com.ticketbooking.booking_service.dto;
 import com.ticketbooking.booking_service.entity.BookingStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +20,9 @@ public class BookingResponse {
 
 	private BookingStatus status;
 
-	private LocalDateTime bookingTime;
+	private Instant bookingTime;
 
-	private LocalDateTime reservedUntil;
+	private Instant reservedUntil;
 
 	private List<BookingItemResponse> items = new ArrayList<>();
 
@@ -66,19 +66,19 @@ public class BookingResponse {
 		this.status = status;
 	}
 
-	public LocalDateTime getBookingTime() {
+	public Instant getBookingTime() {
 		return bookingTime;
 	}
 
-	public void setBookingTime(LocalDateTime bookingTime) {
+	public void setBookingTime(Instant bookingTime) {
 		this.bookingTime = bookingTime;
 	}
 
-	public LocalDateTime getReservedUntil() {
+	public Instant getReservedUntil() {
 		return reservedUntil;
 	}
 
-	public void setReservedUntil(LocalDateTime reservedUntil) {
+	public void setReservedUntil(Instant reservedUntil) {
 		this.reservedUntil = reservedUntil;
 	}
 
