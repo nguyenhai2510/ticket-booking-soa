@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatEventDate } from '@/lib/format';
+import { eventService, type Event } from '@/api/eventService';
 
 interface LocalBooking {
   id: string;
@@ -22,6 +23,7 @@ export default function Profile() {
   
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [realBookings, setRealBookings] = useState<LocalBooking[]>([]);
+  const [eventsMap, setEventsMap] = useState<Record<string, Event>>({});
 
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username') || 'Khách hàng';
@@ -40,12 +42,50 @@ export default function Profile() {
     try {
       const stored = localStorage.getItem('confirmedBookings');
       if (stored) {
-        setRealBookings(JSON.parse(stored));
+        const bookings: LocalBooking[] = JSON.parse(stored);
+        setRealBookings(bookings);
+
+        // Fetch event details for each unique eventId
+        const uniqueEventIds = Array.from(new Set(bookings.map((b) => b.eventId)));
+        uniqueEventIds.forEach(async (id) => {
+          try {
+            const event = await eventService.getEventById(id);
+            setEventsMap((prev) => ({ ...prev, [id]: event }));
+          } catch (err) {
+            console.error(`Không thể tải thông tin sự kiện ${id}:`, err);
+          }
+        });
       }
     } catch (e) {
       console.error('Không thể đọc dữ liệu vé đã thanh toán:', e);
     }
   }, []);
+
+  const getTicketCategoryNames = (b: LocalBooking) => {
+    if (!b.items || b.items.length === 0) return 'Vé Phổ thông';
+    const event = eventsMap[b.eventId];
+    if (!event || !event.ticketCategories) return 'Vé Phổ thông / VIP';
+    return b.items
+      .map((item) => {
+        const cat = event.ticketCategories?.find((c) => c.id === item.ticketCategoryId);
+        return `${cat?.name || 'Vé'} x${item.quantity}`;
+      })
+      .join(', ');
+  };
+
+  const now = new Date();
+
+  const upcomingBookings = realBookings.filter((b) => {
+    const event = eventsMap[b.eventId];
+    if (!event) return true; // Default to upcoming while loading event
+    return new Date(event.eventDate) >= now;
+  });
+
+  const pastBookings = realBookings.filter((b) => {
+    const event = eventsMap[b.eventId];
+    if (!event) return false;
+    return new Date(event.eventDate) < now;
+  });
 
   return (
     <div className="bg-surface text-on-surface font-body-base antialiased min-h-screen flex flex-col pt-16">
@@ -186,161 +226,165 @@ export default function Profile() {
 
           <div className="flex flex-col gap-4">
             {activeTab === 'upcoming' ? (
-              <>
-                {/* 1. Real confirmed bookings from this session */}
-                {realBookings.map((b) => (
-                  <div key={b.id} className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                    <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container flex flex-col items-center justify-center text-primary-fixed bg-primary">
-                      <span className="material-symbols-outlined text-5xl opacity-40">local_activity</span>
-                      <span className="text-[10px] uppercase font-bold tracking-wider mt-2">Vé điện tử</span>
-                    </div>
-                    <div className="p-card-padding flex flex-col flex-grow justify-center gap-3">
-                      <div className="flex justify-between items-start mb-1 gap-4">
-                        <h3 className="font-h3 text-h3 text-on-surface group-hover:text-primary font-bold transition-colors text-lg line-clamp-1">
-                          Vé Sự Kiện Đã Đặt
-                        </h3>
-                        <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">
-                          Đã thanh toán
-                        </span>
+              upcomingBookings.length > 0 ? (
+                upcomingBookings.map((b) => {
+                  const event = eventsMap[b.eventId];
+                  return (
+                    <div key={b.id} className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                      <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container overflow-hidden flex items-center justify-center">
+                        {event?.imageUrl ? (
+                          <img 
+                            alt={event.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                            src={event.imageUrl}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary flex flex-col items-center justify-center text-on-primary p-4">
+                            <span className="material-symbols-outlined text-5xl opacity-40">local_activity</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider mt-2">Vé điện tử</span>
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2 text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
-                          <span className="font-body-sm text-body-sm select-all font-mono">Mã vé: {b.id}</span>
+                      <div className="p-card-padding flex flex-col flex-grow justify-center gap-3">
+                        <div className="flex justify-between items-start mb-1 gap-4">
+                          <h3 className="font-h3 text-h3 text-on-surface group-hover:text-primary font-bold transition-colors text-lg line-clamp-1">
+                            {event?.title || 'Đang tải thông tin...'}
+                          </h3>
+                          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">
+                            Đã thanh toán
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[16px]">payments</span>
-                          <span className="font-body-sm text-body-sm font-semibold text-primary">Tổng tiền: {formatCurrency(b.totalAmount)}</span>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+                            <span className="font-body-sm text-body-sm select-all font-mono">Mã vé: {b.id}</span>
+                          </div>
+                          {event?.eventDate && (
+                            <div className="flex items-center gap-2 text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                              <span className="font-body-sm text-body-sm">{formatEventDate(event.eventDate)}</span>
+                            </div>
+                          )}
+                          {event?.location && (
+                            <div className="flex items-center gap-2 text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[16px]">location_on</span>
+                              <span className="font-body-sm text-body-sm line-clamp-1">{event.location}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[16px]">payments</span>
+                            <span className="font-body-sm text-body-sm font-semibold text-primary">Tổng tiền: {formatCurrency(b.totalAmount)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
+                          <div className="flex flex-col">
+                            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Hạng vé</span>
+                            <span className="font-body-base text-body-base font-bold text-on-surface">
+                              {getTicketCategoryNames(b)}
+                            </span>
+                          </div>
+                          <button 
+                            onClick={() => navigate(`/checkout/${b.id}`)}
+                            className="text-primary font-label-md text-label-md font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            Chi tiết hoá đơn <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                          </button>
                         </div>
                       </div>
-                      
-                      <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
-                        <div className="flex flex-col">
-                          <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Hạng vé</span>
-                          <span className="font-body-base text-body-base font-bold text-on-surface">Vé Phổ thông / VIP</span>
-                        </div>
-                        <button 
-                          onClick={() => navigate(`/checkout/${b.id}`)}
-                          className="text-primary font-label-md text-label-md font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          Chi tiết hoá đơn <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                ))}
-
-                {/* 2. Mock upcoming ticket card 1 */}
-                <div className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                  <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container overflow-hidden">
-                    <img 
-                      alt="Global Tech Summit" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfIiCnBU2dWbPqGhXtwKGGo-6aJKxERJifaAej1F52dcoZ3gcB2UuuthPlL8ekX8pQwjM1gF-AaQuyTezwmixImj5hF7R-Y7YUDuBCn-AnBvopwQVwkaBwY6LiFDs_Rz5ckPWw-Z4AejCmSQ1wMTTLaZJZe_-_X6HgXy8oVqPWhQr0YXVNjm8ZaG0OHGYMMZsYkP3VKwtSie6rmzihCzrL2YTzsWXBSDzZVqvxVZ7fcFzb4vsDpPg-_1JXM3NnQ65YR2NSLOLz5A"
-                    />
-                  </div>
-                  <div className="p-card-padding flex flex-col flex-1 justify-center gap-3">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-h3 text-h3 text-on-surface group-hover:text-primary font-bold transition-colors text-lg">Global Tech Summit 2024</h3>
-                      <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">Thành công</span>
-                    </div>
-                    <div className="flex flex-col gap-1 text-on-surface-variant">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-                        <span className="font-body-sm text-body-sm">15 Tháng 10, 2024 • 09:00 AM</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">location_on</span>
-                        <span className="font-body-sm text-body-sm">Moscone Center, San Francisco</span>
-                      </div>
-                    </div>
-                    <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
-                      <div className="flex flex-col">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Chỗ ngồi</span>
-                        <span className="font-body-base text-body-base font-bold text-on-surface">Khu A, Dãy 12, Ghế 4</span>
-                      </div>
-                      <button className="text-primary font-label-md text-label-md font-bold hover:underline flex items-center gap-1">
-                        Xem vé <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                      </button>
-                    </div>
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-outline-variant rounded-xl bg-surface-container-lowest text-center">
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/60 mb-2">event_busy</span>
+                  <p className="font-label-md text-label-md text-on-surface-variant">Không có vé nào sắp diễn ra</p>
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="mt-4 bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm"
+                  >
+                    Khám phá sự kiện
+                  </button>
                 </div>
-
-                {/* 3. Mock upcoming ticket card 2 */}
-                <div className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                  <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container overflow-hidden">
-                    <img 
-                      alt="Symphony Under the Stars" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrTvFSIuDDAabB0D5vU6HtAvON6c8lTfGsedum43MOt9Wvfotya2VbkcQoi0CrHwXyPGyNX_KOHqEol3CNhVb395Z4HAHyvMG8JMA64lYbHPRBPmZBdHdqcxYN4CZdZXFULU1TGpkTBXnX-0YnnLc8VxCqRmtw0bJG6lE6Ys8vrjt48byhbQ63MTLXoqPiNdMEKjQv3GOBRIub-bX3Wl_idNbIdY2zfW5oSrZ0NVNclnaZII_SexpgQaVylTZRARWc_Nqm5hASrg"
-                    />
-                  </div>
-                  <div className="p-card-padding flex flex-col flex-grow justify-center gap-3">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-h3 text-h3 text-on-surface group-hover:text-primary font-bold transition-colors text-lg">Symphony Under the Stars</h3>
-                      <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">Thành công</span>
-                    </div>
-                    <div className="flex flex-col gap-1 text-on-surface-variant">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-                        <span className="font-body-sm text-body-sm">20 Tháng 9, 2024 • 07:30 PM</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">location_on</span>
-                        <span className="font-body-sm text-body-sm">Central Park Great Lawn, New York</span>
-                      </div>
-                    </div>
-                    <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
-                      <div className="flex flex-col">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Chỗ ngồi</span>
-                        <span className="font-body-base text-body-base font-bold text-on-surface">Vé Phổ thông - Bãi cỏ</span>
-                      </div>
-                      <button className="text-primary font-label-md text-label-md font-bold hover:underline flex items-center gap-1">
-                        Xem vé <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>
+              )
             ) : (
-              <>
-                {/* Past Tickets - Mock Cancelled / Completed events */}
-                <div className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group opacity-80">
-                  <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container overflow-hidden grayscale">
-                    <img 
-                      alt="Startup Pitch Night" 
-                      className="w-full h-full object-cover" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfIiCnBU2dWbPqGhXtwKGGo-6aJKxERJifaAej1F52dcoZ3gcB2UuuthPlL8ekX8pQwjM1gF-AaQuyTezwmixImj5hF7R-Y7YUDuBCn-AnBvopwQVwkaBwY6LiFDs_Rz5ckPWw-Z4AejCmSQ1wMTTLaZJZe_-_X6HgXy8oVqPWhQr0YXVNjm8ZaG0OHGYMMZsYkP3VKwtSie6rmzihCzrL2YTzsWXBSDzZVqvxVZ7fcFzb4vsDpPg-_1JXM3NnQ65YR2NSLOLz5A"
-                    />
-                  </div>
-                  <div className="p-card-padding flex flex-col flex-grow justify-center gap-3">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-h3 text-h3 text-on-surface font-bold text-lg line-through decoration-outline">Startup Pitch Night</h3>
-                      <span className="bg-error-container text-on-error-container px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">Đã hủy</span>
-                    </div>
-                    <div className="flex flex-col gap-1 text-on-surface-variant">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-                        <span className="font-body-sm text-body-sm">05 Tháng 8, 2024 • 06:00 PM</span>
+              pastBookings.length > 0 ? (
+                pastBookings.map((b) => {
+                  const event = eventsMap[b.eventId];
+                  return (
+                    <div key={b.id} className="flex flex-col sm:flex-row bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group opacity-80">
+                      <div className="w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-surface-container overflow-hidden flex items-center justify-center grayscale">
+                        {event?.imageUrl ? (
+                          <img 
+                            alt={event.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                            src={event.imageUrl}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary flex flex-col items-center justify-center text-on-primary p-4">
+                            <span className="material-symbols-outlined text-5xl opacity-40">local_activity</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider mt-2">Vé điện tử</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">location_on</span>
-                        <span className="font-body-sm text-body-sm">WeWork Downtown, Austin</span>
+                      <div className="p-card-padding flex flex-col flex-grow justify-center gap-3">
+                        <div className="flex justify-between items-start mb-1 gap-4">
+                          <h3 className="font-h3 text-h3 text-on-surface group-hover:text-primary font-bold transition-colors text-lg line-clamp-1 line-through decoration-outline">
+                            {event?.title || 'Đang tải thông tin...'}
+                          </h3>
+                          <span className="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap font-bold">
+                            Đã diễn ra
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+                            <span className="font-body-sm text-body-sm select-all font-mono">Mã vé: {b.id}</span>
+                          </div>
+                          {event?.eventDate && (
+                            <div className="flex items-center gap-2 text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                              <span className="font-body-sm text-body-sm">{formatEventDate(event.eventDate)}</span>
+                            </div>
+                          )}
+                          {event?.location && (
+                            <div className="flex items-center gap-2 text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[16px]">location_on</span>
+                              <span className="font-body-sm text-body-sm line-clamp-1">{event.location}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[16px]">payments</span>
+                            <span className="font-body-sm text-body-sm font-semibold text-primary">Tổng tiền: {formatCurrency(b.totalAmount)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
+                          <div className="flex flex-col">
+                            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Hạng vé</span>
+                            <span className="font-body-base text-body-base font-bold text-on-surface">
+                              {getTicketCategoryNames(b)}
+                            </span>
+                          </div>
+                          <button 
+                            onClick={() => navigate(`/checkout/${b.id}`)}
+                            className="text-primary font-label-md text-label-md font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            Chi tiết hoá đơn <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-auto flex items-center justify-between border-t border-outline-variant pt-3">
-                      <div className="flex flex-col">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Trạng thái hoàn tiền</span>
-                        <span className="font-body-base text-body-base font-bold text-on-surface">Đã hoàn tiền ngày 01/08</span>
-                      </div>
-                      <button className="text-secondary font-label-md text-label-md font-bold hover:underline flex items-center gap-1">
-                        Chi tiết <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                      </button>
-                    </div>
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-outline-variant rounded-xl bg-surface-container-lowest text-center">
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/60 mb-2">history</span>
+                  <p className="font-label-md text-label-md text-on-surface-variant">Bạn chưa tham gia sự kiện nào trước đây</p>
                 </div>
-              </>
+              )
             )}
           </div>
         </main>
