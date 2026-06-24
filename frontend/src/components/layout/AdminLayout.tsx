@@ -1,8 +1,24 @@
-import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const AdminLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Guard: only ADMIN users can access /admin/*.
+  // Non-admins (or unauthenticated visitors) are redirected away.
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole');
+
+    if (!userId) {
+      navigate('/login', { replace: true, state: { from: location.pathname } });
+      return;
+    }
+    if (userRole !== 'ADMIN') {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   // Determine current page title
   const getPageTitle = () => {
@@ -13,6 +29,8 @@ const AdminLayout: React.FC = () => {
         return 'Quản lý Sự kiện';
       case '/admin/sliders':
         return 'Quản lý Tin nổi bật';
+      case '/admin/users':
+        return 'Quản lý Người dùng';
       default:
         return 'Quản trị hệ thống';
     }
@@ -78,12 +96,22 @@ const AdminLayout: React.FC = () => {
             <span className="text-sm font-medium">Tin nổi bật</span>
           </NavLink>
 
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? 'bg-primary-container text-on-primary-container font-bold translate-x-1 shadow-sm'
+                  : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'
+              }`
+            }
+          >
+            <span className="material-symbols-outlined">group</span>
+            <span className="text-sm font-medium">Quản lý Người dùng</span>
+          </NavLink>
+
           {/* Placeholders for future feature modules */}
           <div className="pt-4 border-t border-outline-variant/30 space-y-1">
-            <div className="flex items-center gap-3 px-4 py-3 text-on-surface-variant/40 cursor-not-allowed select-none">
-              <span className="material-symbols-outlined">group</span>
-              <span className="text-sm font-medium">Quản lý Người dùng</span>
-            </div>
             <div className="flex items-center gap-3 px-4 py-3 text-on-surface-variant/40 cursor-not-allowed select-none">
               <span className="material-symbols-outlined">bar_chart</span>
               <span className="text-sm font-medium">Báo cáo</span>
