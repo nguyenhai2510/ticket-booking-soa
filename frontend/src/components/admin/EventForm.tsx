@@ -19,6 +19,7 @@ const eventFormSchema = z.object({
   eventDate: z.string().min(1, 'Vui lòng chọn ngày diễn ra'),
   imageUrl: z.string().url('URL ảnh không hợp lệ').optional().or(z.literal('')),
   description: z.string().optional(),
+  category: z.string().optional(),
   ticketCategories: z.array(ticketCategorySchema).min(1, 'Cần có ít nhất một hạng vé'),
 });
 
@@ -49,6 +50,20 @@ const EventForm: React.FC<EventFormProps> = ({ initialData, onSubmit, onCancel }
     }
   };
 
+  // Helper to extract category tag from description
+  const parseDescriptionAndCategory = (desc?: string | null) => {
+    if (!desc) return { description: '', category: 'Other' };
+    const match = desc.match(/\[Category:\s*(Music|Comedy|Sports|Other)\]$/i);
+    if (match) {
+      const category = match[1];
+      const cleanedDesc = desc.replace(/\[Category:\s*(Music|Comedy|Sports|Other)\]$/i, '').trim();
+      return { description: cleanedDesc, category };
+    }
+    return { description: desc, category: 'Other' };
+  };
+
+  const parsed = parseDescriptionAndCategory(initialData?.description);
+
   const {
     register,
     control,
@@ -61,7 +76,8 @@ const EventForm: React.FC<EventFormProps> = ({ initialData, onSubmit, onCancel }
       location: initialData?.location || '',
       eventDate: formatDateForInput(initialData?.eventDate),
       imageUrl: initialData?.imageUrl || '',
-      description: initialData?.description || '',
+      description: parsed.description,
+      category: parsed.category,
       ticketCategories: initialData?.ticketCategories
         ? initialData.ticketCategories.map((cat) => ({
             name: cat.name,
@@ -78,13 +94,19 @@ const EventForm: React.FC<EventFormProps> = ({ initialData, onSubmit, onCancel }
   });
 
   const handleFormSubmit = async (values: EventFormValues) => {
+    // Append category tag to description
+    let finalDescription = values.description || '';
+    if (values.category && values.category !== 'Other') {
+      finalDescription = `${finalDescription.trim()}\n\n[Category: ${values.category}]`;
+    }
+
     // Construct the payload for creation or update
     const payload: any = {
       title: values.title,
       location: values.location,
       eventDate: new Date(values.eventDate).toISOString(),
       imageUrl: values.imageUrl || null,
-      description: values.description || null,
+      description: finalDescription || null,
     };
 
     if (isEdit) {
@@ -125,10 +147,27 @@ const EventForm: React.FC<EventFormProps> = ({ initialData, onSubmit, onCancel }
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="imageUrl">URL Ảnh minh họa</Label>
-        <Input id="imageUrl" {...register('imageUrl')} placeholder="https://example.com/image.png" />
-        {errors.imageUrl && <p className="text-xs text-error font-medium">{errors.imageUrl.message}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label htmlFor="category">Thể loại *</Label>
+          <select
+            id="category"
+            {...register('category')}
+            className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          >
+            <option value="Other">Khác (Nghệ thuật / Hội thảo...)</option>
+            <option value="Music">Âm nhạc</option>
+            <option value="Comedy">Hài kịch</option>
+            <option value="Sports">Thể thao</option>
+          </select>
+          {errors.category && <p className="text-xs text-error font-medium">{errors.category.message}</p>}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="imageUrl">URL Ảnh minh họa</Label>
+          <Input id="imageUrl" {...register('imageUrl')} placeholder="https://example.com/image.png" />
+          {errors.imageUrl && <p className="text-xs text-error font-medium">{errors.imageUrl.message}</p>}
+        </div>
       </div>
 
       <div className="space-y-1">

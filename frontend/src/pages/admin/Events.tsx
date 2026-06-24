@@ -112,15 +112,36 @@ const Events: React.FC = () => {
   };
 
   // Category mapping helper to match Stitch design aesthetics
-  const getEventCategory = (title: string) => {
-    const t = title.toLowerCase();
-    if (t.includes('concert') || t.includes('night') || t.includes('music') || t.includes('ca nhạc')) {
-      return { name: 'Âm nhạc', bg: 'bg-primary-container/10 text-primary', classes: 'bg-[#e2dfff] text-[#3323cc]' };
+  const getEventCategory = (evt: Event) => {
+    const desc = evt.description || '';
+    if (desc.includes('[Category: Music]')) {
+      return { name: 'Âm nhạc', classes: 'bg-[#e2dfff] text-[#3323cc]' };
     }
-    if (t.includes('summit') || t.includes('tech') || t.includes('conference') || t.includes('hội thảo')) {
-      return { name: 'Hội thảo', bg: 'bg-surface-container-highest text-on-surface-variant', classes: 'bg-[#e4e1ee] text-[#464555]' };
+    if (desc.includes('[Category: Comedy]')) {
+      return { name: 'Hài kịch', classes: 'bg-[#ffdbcc] text-[#7e3000]' };
     }
-    return { name: 'Nghệ thuật', bg: 'bg-tertiary-container/10 text-tertiary', classes: 'bg-[#ffdbcc] text-[#7e3000]' };
+    if (desc.includes('[Category: Sports]')) {
+      return { name: 'Thể thao', classes: 'bg-[#d1fae5] text-[#065f46]' };
+    }
+    if (desc.includes('[Category: Other]')) {
+      return { name: 'Khác', classes: 'bg-[#e4e1ee] text-[#464555]' };
+    }
+
+    const t = evt.title.toLowerCase();
+    const d = desc.toLowerCase();
+    if (t.includes('concert') || t.includes('night') || t.includes('music') || t.includes('ca nhạc') || d.includes('nhạc') || d.includes('ca sĩ')) {
+      return { name: 'Âm nhạc', classes: 'bg-[#e2dfff] text-[#3323cc]' };
+    }
+    if (t.includes('comedy') || t.includes('hài') || d.includes('hài')) {
+      return { name: 'Hài kịch', classes: 'bg-[#ffdbcc] text-[#7e3000]' };
+    }
+    if (t.includes('sports') || t.includes('football') || t.includes('bóng đá') || t.includes('thể thao') || d.includes('thể thao')) {
+      return { name: 'Thể thao', classes: 'bg-[#d1fae5] text-[#065f46]' };
+    }
+    if (t.includes('summit') || t.includes('tech') || t.includes('conference') || t.includes('hội thảo') || d.includes('hội thảo')) {
+      return { name: 'Hội thảo', classes: 'bg-[#e4e1ee] text-[#464555]' };
+    }
+    return { name: 'Nghệ thuật', classes: 'bg-[#ffdbcc] text-[#7e3000]' };
   };
 
   // Calculations for list elements
@@ -249,7 +270,7 @@ const Events: React.FC = () => {
                 </TableHeader>
                 <TableBody className="divide-y divide-outline-variant">
                   {filteredEvents.map((evt) => {
-                    const category = getEventCategory(evt.title);
+                    const category = getEventCategory(evt);
                     const stats = getTicketStats(evt);
                     const status = getEventStatus(evt);
                     

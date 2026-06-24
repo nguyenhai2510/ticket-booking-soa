@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { eventService, type Event } from '@/api/eventService';
-import { formatEventDate } from '@/lib/format';
+import { formatEventDate, cleanDescription } from '@/lib/format';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function Home() {
@@ -59,9 +59,24 @@ export default function Home() {
       
       if (selectedCategory === 'All') return matchesSearch;
       
-      // Simple categorization based on title/description keywords
       const titleLower = ev.title.toLowerCase();
       const descLower = (ev.description || '').toLowerCase();
+
+      // 1. Explicit Category tag check
+      if (descLower.includes('[category: music]')) {
+        return matchesSearch && selectedCategory === 'Music';
+      }
+      if (descLower.includes('[category: comedy]')) {
+        return matchesSearch && selectedCategory === 'Comedy';
+      }
+      if (descLower.includes('[category: sports]')) {
+        return matchesSearch && selectedCategory === 'Sports';
+      }
+      if (descLower.includes('[category: other]')) {
+        return matchesSearch && selectedCategory === 'Other';
+      }
+      
+      // 2. Fallback to keyword heuristics
       if (selectedCategory === 'Music') {
         return matchesSearch && (titleLower.includes('music') || titleLower.includes('concert') || titleLower.includes('festival') || titleLower.includes('nhạc') || descLower.includes('nhạc') || descLower.includes('ca sĩ'));
       }
@@ -174,7 +189,7 @@ export default function Home() {
                 
                 {ev.description && (
                   <p className="text-on-surface-variant text-body-sm line-clamp-2">
-                    {ev.description}
+                    {cleanDescription(ev.description)}
                   </p>
                 )}
 
@@ -376,7 +391,7 @@ export default function Home() {
               </h1>
               {featuredEvent.description && (
                 <p className="font-body-lg text-body-lg mb-8 text-surface-container-low drop-shadow-sm line-clamp-2 md:line-clamp-3">
-                  {featuredEvent.description}
+                  {cleanDescription(featuredEvent.description)}
                 </p>
               )}
               <div className="flex flex-wrap gap-4 items-center">

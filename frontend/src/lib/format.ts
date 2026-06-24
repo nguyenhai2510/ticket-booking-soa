@@ -13,3 +13,8 @@ export function formatEventDate(iso: string | undefined): string {
 export function formatCurrency(amount: number): string {
   return `${amount.toLocaleString('vi-VN')}đ`;
 }
+
+export function cleanDescription(desc?: string | null): string {
+  if (!desc) return '';
+  return desc.replace(/\[Category:\s*(Music|Comedy|Sports|Other)\]$/i, '').trim();
+}

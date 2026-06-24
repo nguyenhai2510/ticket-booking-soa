@@ -5,7 +5,7 @@ import { eventService, type Event, type TicketCategory } from '@/api/eventServic
 import { bookingService } from '@/api/bookingService';
 import { getUserId } from '@/hooks/useRequireAuth';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { formatCurrency, formatEventDate } from '@/lib/format';
+import { formatCurrency, formatEventDate, cleanDescription } from '@/lib/format';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -274,7 +274,7 @@ export default function EventDetail() {
               </div>
               <h1 className="font-h1 text-h1 mb-2 text-white drop-shadow-md font-bold text-2xl md:text-4xl">{event.title}</h1>
               {event.description && (
-                <p className="font-body-lg text-body-lg text-surface-container-low mb-6 max-w-2xl line-clamp-2 md:line-clamp-3">{event.description}</p>
+                <p className="font-body-lg text-body-lg text-surface-container-low mb-6 max-w-2xl line-clamp-2 md:line-clamp-3">{cleanDescription(event.description)}</p>
               )}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 font-label-md text-label-md text-surface-container-lowest">
                 <div className="flex items-center gap-2">
@@ -306,7 +306,7 @@ export default function EventDetail() {
             <div className="py-4 font-body-base text-body-base text-secondary flex flex-col gap-4">
               <h3 className="font-h3 text-h3 text-on-surface font-bold text-xl">Mô tả sự kiện</h3>
               <p className="leading-relaxed">
-                {event.description || 'Không có mô tả chi tiết cho sự kiện này. Vui lòng liên hệ ban tổ chức để biết thêm thông tin.'}
+                {cleanDescription(event.description) || 'Không có mô tả chi tiết cho sự kiện này. Vui lòng liên hệ ban tổ chức để biết thêm thông tin.'}
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
