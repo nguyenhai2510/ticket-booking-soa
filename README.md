@@ -3,7 +3,7 @@
 Chào mừng bạn đến với **Ticket Booking System (EventPass)** - Hệ thống bán vé sự kiện trực tuyến được thiết kế theo kiến trúc Microservices (SOA). Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc hệ thống, trạng thái hiện tại, và hướng dẫn thiết lập nhanh môi trường phát triển cục bộ.
 
 > [!IMPORTANT]
-> Chi tiết build/run và các quy tắc phát triển nghiêm ngặt được quy định tại [CLAUDE.md](file:///d:/Project_ca_nhan/ticket-booking-soa/CLAUDE.md) và [GEMINI.md](file:///d:/Project_ca_nhan/ticket-booking-soa/GEMINI.md). Hãy đọc kỹ trước khi thực hiện bất kỳ thay đổi nào.
+> Chi tiết build/run và các quy tắc phát triển nghiêm ngặt được quy định tại [CLAUDE.md](file:///d:/Project_ca_nhan/ticket-booking-soa/CLAUDE.md) và [GEMINI.md](file:///d:/Project_ca_nhan/ticket-booking-soa/GEMINI.md). Để triển khai dự án lên môi trường thực tế (Production), tham khảo hướng dẫn tại [DEPLOYMENT.md](file:///d:/Project_ca_nhan/ticket-booking-soa/DEPLOYMENT.md). Hãy đọc kỹ trước khi thực hiện bất kỳ thay đổi nào.
 
 ---
 
@@ -136,7 +136,20 @@ Trình duyệt sẽ tự động mở trang web phát triển (thường là [ht
 
 ---
 
-## 🔮 5. Kế Hoạch Tiếp Theo (Backlog — Sprint 6+)
+## 🚀 5. Triển Khai Lên Production (Production Deployment)
+
+Dự án hỗ trợ triển khai thực tế trên môi trường Production (ví dụ: VPS Ubuntu 22.04 LTS) tích hợp HTTPS tự động thông qua Web Server **Caddy** và cơ sở dữ liệu đám mây **Neon PostgreSQL**.
+
+### Tóm tắt các thành phần triển khai:
+- **Frontend (React + Vite):** Được build thành mã HTML/JS tĩnh và phục vụ trực tiếp bởi Caddy từ đường dẫn `/var/www/frontend`.
+- **Backend (Spring Boot):** Đóng gói dạng Docker Container, quản lý qua `docker-compose.prod.yml` và được reverse proxy qua cổng `8080` bởi Caddy.
+- **SSL/HTTPS:** Caddy tự động cấu hình và gia hạn chứng chỉ Let's Encrypt miễn phí cho tên miền riêng.
+
+Xem toàn bộ quy trình thiết lập VPS, cấu hình DNS, và quy trình cập nhật code mới (redeploy) chi tiết tại **[DEPLOYMENT.md](file:///d:/Project_ca_nhan/ticket-booking-soa/DEPLOYMENT.md)**.
+
+---
+
+## 🔮 6. Kế Hoạch Tiếp Theo (Backlog — Sprint 6+)
 
 1. **Security:** Tích hợp xác thực JSON Web Token (JWT) tập trung thay thế cho việc cấu hình mở `permitAll()`, phân quyền truy cập chi tiết cho các đầu API đặt vé và API quản lý của Admin.
 2. **Thanh toán thực tế:** Kết nối cổng thanh toán thật (như VNPay, MoMo, hoặc Stripe) thay vì quy trình giả lập thanh toán thành công hiện tại.
