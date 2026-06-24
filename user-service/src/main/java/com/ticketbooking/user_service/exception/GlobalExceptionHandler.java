@@ -15,4 +15,14 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
 	}
 
+	@ExceptionHandler(DuplicateUserException.class)
+	public ResponseEntity<Map<String, String>> handleDuplicateUser(DuplicateUserException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
+	}
+
+	@ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
+	}
+
 }

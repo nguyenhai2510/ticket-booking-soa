@@ -25,11 +25,14 @@ export default function Profile() {
 
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username') || 'Khách hàng';
+  const userRole = localStorage.getItem('userRole') || 'USER';
+  const isAdmin = userRole === 'ADMIN';
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+    localStorage.removeItem('userRole');
     navigate('/login');
   };
 
@@ -132,6 +135,20 @@ export default function Profile() {
               <span className="material-symbols-outlined text-lg">settings</span>
               <span className="font-label-md text-label-md">Cài đặt tài khoản</span>
             </a>
+            {isAdmin && (
+              <>
+                <div className="my-2 border-t border-outline-variant/40" />
+                <a
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center gap-3 px-4 py-3 bg-primary-container/30 text-primary rounded-lg font-bold hover:bg-primary-container/60 transition-all duration-200 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    admin_panel_settings
+                  </span>
+                  <span className="font-label-md text-label-md">Quản trị hệ thống</span>
+                </a>
+              </>
+            )}
           </nav>
         </aside>
 

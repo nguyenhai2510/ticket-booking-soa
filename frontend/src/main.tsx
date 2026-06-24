@@ -13,6 +13,7 @@ import AdminLayout from './components/layout/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
 import Events from './pages/admin/Events'
 import Sliders from './pages/admin/Sliders'
+import Users from './pages/admin/Users'
 import { Navigate } from 'react-router-dom'
 
 const router = createBrowserRouter([
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
       {
         path: 'sliders',
         element: <Sliders />,
+      },
+      {
+        path: 'users',
+        element: <Users />,
       },
     ],
   },
